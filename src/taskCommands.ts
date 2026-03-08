@@ -1,14 +1,14 @@
 import * as vscode from 'vscode';
 import { TaskManager } from './taskManager';
 import { TaskStore } from './taskStore';
-import { TaskTreeProvider } from './taskTreeProvider';
+import { TaskChecklistViewProvider } from './taskTreeProvider';
 import { TaskDetailPanel } from './taskDetailPanel';
 
 export function registerTaskCommands(
   context: vscode.ExtensionContext,
   taskManager: TaskManager,
   taskStore: TaskStore,
-  treeProvider: TaskTreeProvider,
+  treeProvider: TaskChecklistViewProvider,
   taskDetailPanel: TaskDetailPanel,
 ): void {
   context.subscriptions.push(

@@ -9,133 +9,71 @@ import {
 } from './taskTypes';
 import { CATEGORY_LABELS, SecurityCategory } from './types';
 
-type TreeElement = StatusGroupItem | TaskTreeItem;
-
-class StatusGroupItem extends vscode.TreeItem {
-  public readonly taskIds: string[];
-
-  constructor(
-    statusLabel: string,
-    taskIds: string[],
-  ) {
-    super(statusLabel, vscode.TreeItemCollapsibleState.Expanded);
-    this.taskIds = taskIds;
-    this.description = `${taskIds.length}`;
-    this.contextValue = 'taskStatusGroup';
-  }
+interface TaskGroup {
+  label: string;
+  icon: string;
+  colorClass: string;
+  tasks: TaskViewData[];
 }
 
-class TaskTreeItem extends vscode.TreeItem {
-  public readonly taskId: string;
-
-  constructor(
-    taskId: string,
-    instance: TaskInstance,
-  ) {
-    const def = getTaskDefinition(taskId);
-    super(def?.title || taskId, vscode.TreeItemCollapsibleState.None);
-    this.taskId = taskId;
-
-    this.description = this.buildDescription(instance);
-    this.tooltip = this.buildTooltip(instance);
-    this.contextValue = `task-${instance.status}`;
-    this.command = {
-      command: 'caspian-security.showTaskDetail',
-      title: 'Show Task Details',
-      arguments: [taskId],
-    };
-
-    switch (instance.status) {
-      case TaskStatus.Overdue:
-        this.iconPath = new vscode.ThemeIcon('warning', new vscode.ThemeColor('errorForeground'));
-        break;
-      case TaskStatus.Pending:
-        this.iconPath = new vscode.ThemeIcon('circle-outline');
-        break;
-      case TaskStatus.Completed:
-        this.iconPath = new vscode.ThemeIcon('check', new vscode.ThemeColor('testing.iconPassed'));
-        break;
-      case TaskStatus.Snoozed:
-        this.iconPath = new vscode.ThemeIcon('clock');
-        break;
-      case TaskStatus.Dismissed:
-        this.iconPath = new vscode.ThemeIcon('circle-slash');
-        break;
-    }
-  }
-
-  private buildDescription(instance: TaskInstance): string {
-    if (instance.status === TaskStatus.Overdue) {
-      return `Overdue since ${new Date(instance.nextDueAt).toLocaleDateString()}`;
-    }
-    if (instance.status === TaskStatus.Snoozed && instance.snoozeUntil) {
-      return `Snoozed until ${new Date(instance.snoozeUntil).toLocaleDateString()}`;
-    }
-    if (instance.status === TaskStatus.Completed && instance.lastCompletedAt) {
-      return `Done ${new Date(instance.lastCompletedAt).toLocaleDateString()}`;
-    }
-    return `Due ${new Date(instance.nextDueAt).toLocaleDateString()}`;
-  }
-
-  private buildTooltip(instance: TaskInstance): string {
-    const def = getTaskDefinition(this.taskId);
-    const lines = [
-      def?.title || this.taskId,
-    ];
-    if (def?.category) {
-      lines.push(`Category: ${CATEGORY_LABELS[def.category as SecurityCategory] || def.category}`);
-    }
-    lines.push('');
-    if (def?.description) {
-      lines.push(def.description);
-    }
-    lines.push('');
-    lines.push(`Status: ${instance.status}`);
-    lines.push(`Due: ${new Date(instance.nextDueAt).toLocaleString()}`);
-    lines.push(`Interval: ${INTERVAL_LABELS[(instance.intervalOverride || def?.defaultInterval || TaskInterval.Monthly) as TaskInterval]}`);
-    lines.push(`Completed ${instance.completionCount} time(s)`);
-    return lines.join('\n');
-  }
+interface TaskViewData {
+  taskId: string;
+  title: string;
+  meta: string;
+  status: string;
+  priority: number;
 }
 
-export class TaskTreeProvider implements vscode.TreeDataProvider<TreeElement>, vscode.Disposable {
-  private _onDidChangeTreeData = new vscode.EventEmitter<TreeElement | undefined | void>();
-  readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+export class TaskChecklistViewProvider implements vscode.WebviewViewProvider, vscode.Disposable {
+  public static readonly viewType = 'caspianSecurityTasks';
+  private view?: vscode.WebviewView;
   private disposables: vscode.Disposable[] = [];
 
-  constructor(private taskStore: TaskStore) {
+  constructor(
+    private extensionUri: vscode.Uri,
+    private taskStore: TaskStore,
+  ) {
     this.disposables.push(
       this.taskStore.onDidChange(() => {
-        this._onDidChangeTreeData.fire();
+        this.refresh();
       })
     );
   }
 
+  resolveWebviewView(webviewView: vscode.WebviewView): void {
+    this.view = webviewView;
+    webviewView.webview.options = { enableScripts: true };
+    webviewView.webview.html = this.getHtml();
+    webviewView.webview.onDidReceiveMessage(
+      (msg) => this.handleMessage(msg),
+      null,
+      this.disposables,
+    );
+    this.sendData();
+  }
+
   refresh(): void {
-    this._onDidChangeTreeData.fire();
+    this.sendData();
   }
 
-  getTreeItem(element: TreeElement): vscode.TreeItem {
-    return element;
+  private sendData(): void {
+    if (!this.view) { return; }
+    const groups = this.buildGroups();
+    this.view.webview.postMessage({ type: 'update', groups });
   }
 
-  getChildren(element?: TreeElement): TreeElement[] {
-    if (!element) {
-      return this.getStatusGroups();
+  private handleMessage(msg: { command: string; taskId?: string }): void {
+    switch (msg.command) {
+      case 'showDetail':
+        if (msg.taskId) {
+          vscode.commands.executeCommand('caspian-security.showTaskDetail', msg.taskId);
+        }
+        break;
     }
-
-    if (element instanceof StatusGroupItem) {
-      return element.taskIds.map(id => {
-        const instance = this.taskStore.getInstance(id)!;
-        return new TaskTreeItem(id, instance);
-      });
-    }
-
-    return [];
   }
 
-  private getStatusGroups(): StatusGroupItem[] {
-    const groups: Record<string, string[]> = {
+  private buildGroups(): TaskGroup[] {
+    const buckets: Record<string, TaskViewData[]> = {
       overdue: [],
       pending: [],
       completed: [],
@@ -144,47 +82,297 @@ export class TaskTreeProvider implements vscode.TreeDataProvider<TreeElement>, v
     };
 
     for (const instance of this.taskStore.getAllInstances()) {
+      const def = getTaskDefinition(instance.taskId);
+      const title = def?.title || instance.taskId;
+      const interval = INTERVAL_LABELS[(instance.intervalOverride || def?.defaultInterval || TaskInterval.Monthly) as TaskInterval];
+      const category = def?.category
+        ? CATEGORY_LABELS[def.category as SecurityCategory] || def.category
+        : '';
+
+      let meta = '';
       switch (instance.status) {
-        case TaskStatus.Overdue: groups.overdue.push(instance.taskId); break;
-        case TaskStatus.Pending: groups.pending.push(instance.taskId); break;
-        case TaskStatus.Completed: groups.completed.push(instance.taskId); break;
-        case TaskStatus.Snoozed: groups.snoozed.push(instance.taskId); break;
-        case TaskStatus.Dismissed: groups.dismissed.push(instance.taskId); break;
+        case TaskStatus.Overdue:
+          meta = `Overdue ${this.fmtDate(instance.nextDueAt)}`;
+          break;
+        case TaskStatus.Snoozed:
+          meta = instance.snoozeUntil
+            ? `Snoozed until ${this.fmtDate(instance.snoozeUntil)}`
+            : 'Snoozed';
+          break;
+        case TaskStatus.Completed:
+          meta = instance.lastCompletedAt
+            ? `Done ${this.fmtDate(instance.lastCompletedAt)}`
+            : 'Completed';
+          break;
+        case TaskStatus.Dismissed:
+          meta = instance.dismissedAt
+            ? `Dismissed ${this.fmtDate(instance.dismissedAt)}`
+            : 'Dismissed';
+          break;
+        default:
+          meta = `Due ${this.fmtDate(instance.nextDueAt)}`;
+          break;
+      }
+
+      meta += ` · ${interval}`;
+      if (category) { meta += ` · ${category}`; }
+
+      const data: TaskViewData = {
+        taskId: instance.taskId,
+        title,
+        meta,
+        status: instance.status,
+        priority: def?.priority || 0,
+      };
+
+      switch (instance.status) {
+        case TaskStatus.Overdue: buckets.overdue.push(data); break;
+        case TaskStatus.Pending: buckets.pending.push(data); break;
+        case TaskStatus.Completed: buckets.completed.push(data); break;
+        case TaskStatus.Snoozed: buckets.snoozed.push(data); break;
+        case TaskStatus.Dismissed: buckets.dismissed.push(data); break;
       }
     }
 
-    for (const key of Object.keys(groups)) {
-      groups[key].sort((a, b) => {
-        const defA = getTaskDefinition(a);
-        const defB = getTaskDefinition(b);
-        return (defB?.priority || 0) - (defA?.priority || 0);
+    for (const key of Object.keys(buckets)) {
+      buckets[key].sort((a, b) => b.priority - a.priority);
+    }
+
+    const groups: TaskGroup[] = [];
+    if (buckets.overdue.length > 0) {
+      groups.push({ label: 'Overdue', icon: '\u26A0', colorClass: 'status-overdue', tasks: buckets.overdue });
+    }
+    if (buckets.pending.length > 0) {
+      groups.push({ label: 'Pending', icon: '\u25CB', colorClass: 'status-pending', tasks: buckets.pending });
+    }
+    if (buckets.completed.length > 0) {
+      groups.push({ label: 'Completed', icon: '\u2713', colorClass: 'status-completed', tasks: buckets.completed });
+    }
+    if (buckets.snoozed.length > 0) {
+      groups.push({ label: 'Snoozed', icon: '\u23F0', colorClass: 'status-snoozed', tasks: buckets.snoozed });
+    }
+    if (buckets.dismissed.length > 0) {
+      groups.push({ label: 'Dismissed', icon: '\u2298', colorClass: 'status-dismissed', tasks: buckets.dismissed });
+    }
+    return groups;
+  }
+
+  private fmtDate(iso: string): string {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  private getHtml(): string {
+    const nonce = getNonce();
+    return /* html */ `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy"
+  content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--vscode-foreground);
+  background: transparent;
+  padding: 0;
+}
+
+/* ── Groups ── */
+.group { margin-bottom: 4px; }
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--vscode-foreground);
+}
+.group-header:hover { background: var(--vscode-list-hoverBackground); }
+
+.chevron {
+  display: inline-block;
+  font-size: 12px;
+  transition: transform 0.15s;
+}
+.group.collapsed .chevron { transform: rotate(-90deg); }
+.group.collapsed .group-items { display: none; }
+
+.group-icon { font-size: 13px; line-height: 1; }
+.group-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: normal;
+  color: var(--vscode-descriptionForeground);
+  background: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+  padding: 0 6px;
+  border-radius: 8px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* Status colors */
+.status-overdue .group-icon { color: var(--vscode-errorForeground); }
+.status-pending .group-icon { color: var(--vscode-foreground); opacity: 0.7; }
+.status-completed .group-icon { color: var(--vscode-testing-iconPassed, #73c991); }
+.status-snoozed .group-icon { color: var(--vscode-editorWarning-foreground); }
+.status-dismissed .group-icon { color: var(--vscode-descriptionForeground); }
+
+/* ── Task items ── */
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 8px 5px 20px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.task-item:hover { background: var(--vscode-list-hoverBackground); }
+.task-item:active { background: var(--vscode-list-activeSelectionBackground); }
+
+.task-icon {
+  flex-shrink: 0;
+  font-size: 13px;
+  line-height: 20px;
+  width: 16px;
+  text-align: center;
+}
+.task-item .status-overdue { color: var(--vscode-errorForeground); }
+.task-item .status-pending { color: var(--vscode-foreground); opacity: 0.6; }
+.task-item .status-completed { color: var(--vscode-testing-iconPassed, #73c991); }
+.task-item .status-snoozed { color: var(--vscode-editorWarning-foreground); }
+.task-item .status-dismissed { color: var(--vscode-descriptionForeground); }
+
+.task-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.task-title {
+  font-size: 13px;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--vscode-foreground);
+}
+.task-meta {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--vscode-descriptionForeground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  padding: 16px;
+  text-align: center;
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script nonce="${nonce}">
+(function() {
+  const vscode = acquireVsCodeApi();
+  const root = document.getElementById('root');
+
+  // Track collapsed state
+  const collapsedGroups = {};
+
+  window.addEventListener('message', e => {
+    if (e.data.type === 'update') {
+      render(e.data.groups);
+    }
+  });
+
+  function render(groups) {
+    if (!groups || groups.length === 0) {
+      root.innerHTML = '<div class="empty-state">No security tasks configured.</div>';
+      return;
+    }
+
+    root.innerHTML = '';
+    for (const g of groups) {
+      const groupEl = document.createElement('div');
+      groupEl.className = 'group' + (collapsedGroups[g.label] ? ' collapsed' : '');
+
+      // Header
+      const header = document.createElement('div');
+      header.className = 'group-header ' + g.colorClass;
+      header.innerHTML =
+        '<span class="chevron">&#9662;</span>' +
+        '<span class="group-icon">' + escHtml(g.icon) + '</span>' +
+        '<span>' + escHtml(g.label) + '</span>' +
+        '<span class="group-count">' + g.tasks.length + '</span>';
+      header.addEventListener('click', () => {
+        collapsedGroups[g.label] = !collapsedGroups[g.label];
+        groupEl.classList.toggle('collapsed');
       });
-    }
+      groupEl.appendChild(header);
 
-    const result: StatusGroupItem[] = [];
-    if (groups.overdue.length > 0) {
-      result.push(new StatusGroupItem('$(warning) Overdue', groups.overdue));
+      // Items
+      const items = document.createElement('div');
+      items.className = 'group-items';
+      for (const t of g.tasks) {
+        const item = document.createElement('div');
+        item.className = 'task-item';
+        item.innerHTML =
+          '<span class="task-icon ' + statusClass(t.status) + '">' + escHtml(g.icon) + '</span>' +
+          '<div class="task-content">' +
+            '<div class="task-title">' + escHtml(t.title) + '</div>' +
+            '<div class="task-meta">' + escHtml(t.meta) + '</div>' +
+          '</div>';
+        item.addEventListener('click', () => {
+          vscode.postMessage({ command: 'showDetail', taskId: t.taskId });
+        });
+        items.appendChild(item);
+      }
+      groupEl.appendChild(items);
+      root.appendChild(groupEl);
     }
-    if (groups.pending.length > 0) {
-      result.push(new StatusGroupItem('$(circle-outline) Pending', groups.pending));
-    }
-    if (groups.completed.length > 0) {
-      result.push(new StatusGroupItem('$(check) Completed', groups.completed));
-    }
-    if (groups.snoozed.length > 0) {
-      result.push(new StatusGroupItem('$(clock) Snoozed', groups.snoozed));
-    }
-    if (groups.dismissed.length > 0) {
-      result.push(new StatusGroupItem('$(circle-slash) Dismissed', groups.dismissed));
-    }
+  }
 
-    return result;
+  function statusClass(s) {
+    return 'status-' + s;
+  }
+
+  function escHtml(s) {
+    const el = document.createElement('span');
+    el.textContent = s;
+    return el.innerHTML;
+  }
+})();
+</script>
+</body>
+</html>`;
   }
 
   dispose(): void {
-    this._onDidChangeTreeData.dispose();
     for (const d of this.disposables) {
       d.dispose();
     }
   }
+}
+
+function getNonce(): string {
+  let text = '';
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  for (let i = 0; i < 32; i++) {
+    text += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return text;
 }

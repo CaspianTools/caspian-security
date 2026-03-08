@@ -4,6 +4,15 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [8.2.0] - 2026-03-08
+
+### Changed
+
+- Replace task checklist TreeView with a custom WebviewView for the sidebar
+- Task items now show two lines: title on line 1, due date and metadata on line 2
+- Group headers (Overdue, Pending, etc.) render proper icons instead of literal `$(icon)` text
+- Collapsible status groups with chevron indicators
+
 ## [8.1.4] - 2026-03-08
 
 ### Fixed

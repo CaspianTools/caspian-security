@@ -28,7 +28,7 @@ import { TelemetryService } from './telemetryService';
 import { LearningPanel } from './learningPanel';
 import { TaskStore } from './taskStore';
 import { TaskManager } from './taskManager';
-import { TaskTreeProvider } from './taskTreeProvider';
+import { TaskChecklistViewProvider } from './taskTreeProvider';
 import { registerTaskCommands } from './taskCommands';
 import { TaskDetailPanel } from './taskDetailPanel';
 
@@ -122,7 +122,7 @@ let telemetryService: TelemetryService;
 let learningPanel: LearningPanel;
 let taskStore: TaskStore;
 let taskManager: TaskManager;
-let taskTreeProvider: TaskTreeProvider;
+let taskChecklistProvider: TaskChecklistViewProvider;
 
 export function activate(context: vscode.ExtensionContext) {
   try {
@@ -212,22 +212,24 @@ export function activate(context: vscode.ExtensionContext) {
       taskStore.initializeFromCatalog();
 
       taskManager = new TaskManager(taskStore, configManager);
-      taskTreeProvider = new TaskTreeProvider(taskStore);
+      taskChecklistProvider = new TaskChecklistViewProvider(context.extensionUri, taskStore);
 
       const taskDetailPanel = new TaskDetailPanel(context.extensionUri, taskStore);
 
       context.subscriptions.push(taskStore);
       context.subscriptions.push(taskManager);
-      context.subscriptions.push(taskTreeProvider);
       context.subscriptions.push(taskDetailPanel);
 
-      const treeView = vscode.window.createTreeView('caspianSecurityTasks', {
-        treeDataProvider: taskTreeProvider,
-        showCollapseAll: true,
-      });
-      context.subscriptions.push(treeView);
+      context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(
+          TaskChecklistViewProvider.viewType,
+          taskChecklistProvider,
+          { webviewOptions: { retainContextWhenHidden: true } },
+        )
+      );
+      context.subscriptions.push(taskChecklistProvider);
 
-      registerTaskCommands(context, taskManager, taskStore, taskTreeProvider, taskDetailPanel);
+      registerTaskCommands(context, taskManager, taskStore, taskChecklistProvider, taskDetailPanel);
 
       vscode.commands.executeCommand('setContext', 'caspianSecurity.taskManagementEnabled',
         configManager.get<boolean>('enableTaskManagement', true));
