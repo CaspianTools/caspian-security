@@ -812,7 +812,7 @@ function registerCategoryCommands(context: vscode.ExtensionContext) {
       vscode.commands.registerCommand(commandId, async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
-          vscode.window.showWarningMessage('No active editor found');
+          await runWorkspaceCheck([category as SecurityCategory]);
           return;
         }
         if (!shouldCheckDocument(editor.document)) {
@@ -993,7 +993,7 @@ async function checkDocument(document: vscode.TextDocument, categories?: Securit
   }
 }
 
-async function runWorkspaceCheck() {
+async function runWorkspaceCheck(categoryFilter?: SecurityCategory[]) {
   const globPattern = configManager.getFileGlobPattern();
   if (!globPattern) {
     vscode.window.showWarningMessage('No languages enabled for security checks');
@@ -1049,7 +1049,7 @@ async function runWorkspaceCheck() {
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: `Caspian Security: Scanning ${batch.label} (batch ${batchIndex + 1}/${batches.length})`,
+        title: `Caspian Security: Scanning ${batch.label}${categoryFilter ? ` [${CATEGORY_LABELS[categoryFilter[0]]}]` : ''} (batch ${batchIndex + 1}/${batches.length})`,
         cancellable: true,
       },
       async (progress, token) => {
@@ -1107,7 +1107,7 @@ async function runWorkspaceCheck() {
           }
 
           const document = await vscode.workspace.openTextDocument(file);
-          const categories = configManager.getEnabledCategories();
+          const categories = categoryFilter || configManager.getEnabledCategories();
           let issues = await analyzer.analyzeDocument(document, categories);
 
           // Apply false positive filtering

@@ -4,6 +4,13 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [8.1.4] - 2026-03-08
+
+### Fixed
+
+- Fix "No active editor found" error when clicking Run Check from the task detail panel
+- Category-specific check commands now fall back to a workspace scan filtered by that category when no editor is open
+
 ## [8.1.3] - 2026-03-06
 
 ### Fixed
