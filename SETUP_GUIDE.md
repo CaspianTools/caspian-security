@@ -21,7 +21,7 @@ caspian-security/
 │   ├── caspianIgnore.ts             # .caspianignore file parsing
 │   ├── dependencyChecker.ts         # npm outdated/audit + stack checking
 │   ├── types.ts                     # TypeScript type definitions
-│   ├── rules/                       # 14 category rule files (133+ rules)
+│   ├── rules/                       # 14 category rule files (164+ rules)
 │   │   ├── index.ts                 # Rule registry
 │   │   ├── authRules.ts             # AUTH001--AUTH007
 │   │   ├── inputValidationRules.ts  # XSS001--XSS011
@@ -343,7 +343,7 @@ Before each release:
 | Metric | Value |
 |--------|-------|
 | Source Code | ~5300+ lines TypeScript |
-| Security Rules | 133+ across 14 categories |
+| Security Rules | 164+ across 14 categories |
 | Languages Supported | 8 |
 | AI Providers | 3 (Claude, GPT-4, Gemini) |
 | Export Formats | 3 (JSON, CSV, SARIF) |

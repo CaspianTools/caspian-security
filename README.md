@@ -6,7 +6,7 @@ Context-aware security analysis for Visual Studio Code.
 
 ## Overview
 
-Caspian Security is a VS Code extension that detects vulnerabilities, insecure coding patterns, and security best practice violations as you write code. It provides **133 security rules** across **14 categories**, covering SQL injection, XSS, hardcoded secrets, business logic flaws, and more.
+Caspian Security is a VS Code extension that detects vulnerabilities, insecure coding patterns, and security best practice violations as you write code. It provides **164 security rules** across **14 categories**, covering SQL injection, XSS, hardcoded secrets, business logic flaws, and more.
 
 What sets it apart: **context-aware intelligence**. The scanner classifies detected issues with confidence scores (Critical, Safe, or Verify Needed) based on variable-source analysis. AI-powered fixes understand the full function scope and variable definitions -- not just the error line. Teams can share ignore decisions via `.caspianignore`, and scan results export to **SARIF v2.1.0** for direct upload to GitHub Security Alerts.
 
@@ -16,7 +16,7 @@ What sets it apart: **context-aware intelligence**. The scanner classifies detec
 
 - **Context-aware analysis** -- classifies issues by variable source (hardcoded, static, or dynamic) with confidence badges
 - **AI fixes with function-level understanding** -- sends the entire enclosing function and traced variable definitions to the AI, not just 20 lines of context
-- **133 security rules** across 14 categories with actionable fix suggestions
+- **164 security rules** across 14 categories with actionable fix suggestions
 - **Real-time analysis** -- checks code as you type with a 1-second debounce to avoid lag
 - **Full workspace scanning** -- scans all project files on disk, not just open tabs
 - **8 languages supported** -- JavaScript, TypeScript, Python, Java, C#, PHP, Go, Rust
@@ -52,22 +52,22 @@ What sets it apart: **context-aware intelligence**. The scanner classifies detec
 
 | Category                          | Rules | Codes            | Covers                                                        |
 |-----------------------------------|-------|------------------|---------------------------------------------------------------|
-| Authentication & Access Control   | 7     | AUTH001--AUTH007  | JWT secrets, session flags, password comparison, rate limiting |
-| Input Validation & XSS            | 11    | XSS001--XSS011   | innerHTML, document.write, template injection, CSP            |
-| CSRF Protection                   | 7     | CSRF001--CSRF007 | Token validation, SameSite cookies, GET state changes          |
+| Authentication & Access Control   | 10    | AUTH001--007, KT-AUTH001--006 | JWT secrets, session flags, password comparison, tapjacking, intent security |
+| Input Validation & XSS            | 20    | XSS001--016, KT-XSS001--004 | innerHTML, document.write, template injection, CSP, WebView hardening |
+| CSRF Protection                   | 9     | CSRF001--CSRF009 | Token validation, SameSite cookies, GET state changes, double-submit, AJAX headers |
 | CORS Configuration                | 6     | CORS001--CORS006 | Wildcard origins, reflected origins, preflight caching         |
-| Encryption & Data Protection      | 12    | ENC001--ENC012   | Weak crypto, hardcoded keys, HSTS, PII masking, GDPR          |
-| API Security                      | 14    | API001--API014   | Auth middleware, IDOR, rate limiting, GraphQL, error exposure  |
-| Database Security                 | 12    | DB001--DB012     | SQL injection, NoSQL injection, least privilege, default creds |
-| File Handling                     | 14    | FILE001--FILE014 | Path traversal, upload validation, cloud storage, magic bytes  |
-| Secrets & Credentials             | 9     | CRED001--CRED009 | Hardcoded passwords, AWS keys, private keys, GitHub tokens     |
-| Frontend Security                 | 9     | FE001--FE009     | eval(), postMessage, iframe sandbox, prototype pollution       |
+| Encryption & Data Protection      | 18    | ENC001--012, KT-ENC001--006 | Weak crypto, hardcoded keys, HSTS, certificate pinning, cleartext traffic |
+| API Security                      | 16    | API001--API016   | Auth middleware, IDOR, rate limiting, GraphQL, Helmet, server fingerprinting |
+| Database Security                 | 13    | DB001--DB013, KT-DB001 | SQL injection, NoSQL injection, parameterized queries, default creds |
+| File Handling                     | 16    | FILE001--014, KT-FILE001--002 | Path traversal, upload validation, cloud storage, external storage |
+| Secrets & Credentials             | 10    | CRED001--009, KT-CRED001 | Hardcoded passwords, AWS keys, private keys, Android API keys |
+| Frontend Security                 | 13    | FE001--FE013     | eval(), postMessage, DOM-based XSS, open redirects, web storage |
 | Business Logic & Payment Security | 9     | BIZ001--BIZ009   | Premium checks, payment verification, refunds, quotas          |
-| Logging & Monitoring              | 9     | LOG001--LOG009   | Auth logging, sensitive data in logs, log encryption           |
+| Logging & Monitoring              | 11    | LOG001--009, KT-LOG001--002 | Auth logging, sensitive data in logs, clipboard leakage |
 | Dependencies & Supply Chain       | 6     | DEP001--DEP006   | Version pinning, patching SLA, auditing, transitive deps       |
-| Infrastructure & Deployment       | 8     | INFRA001--INFRA008 | Env separation, debug mode, Docker secrets, source maps      |
+| Infrastructure & Deployment       | 13    | INFRA001--008, HDR001--005 | Env separation, debug mode, security headers, Cache-Control |
 
-**Total: 133 rules** (74 code-detectable + 59 informational)
+**Total: 164 rules** (93 code-detectable + 71 informational)
 
 ---
 

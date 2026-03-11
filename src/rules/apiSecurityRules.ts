@@ -172,4 +172,33 @@ export const apiSecurityRules: SecurityRule[] = [
     category: SecurityCategory.APISecurity,
     ruleType: RuleType.Informational,
   },
+  {
+    code: 'API015',
+    message: 'Response may leak server technology via headers',
+    severity: SecuritySeverity.Warning,
+    patterns: [
+      /x-powered-by/i,
+      /Server\s*:\s*['"](?:Express|Apache|nginx|IIS)/i,
+    ],
+    negativePatterns: [/removeHeader/i, /hidePoweredBy/i, /disable\s*\(\s*['"]x-powered-by/i],
+    suggestion:
+      'Remove the X-Powered-By and Server headers to prevent attackers from fingerprinting your server technology. Use helmet.hidePoweredBy() or app.disable("x-powered-by") in Express.',
+    category: SecurityCategory.APISecurity,
+    ruleType: RuleType.Informational,
+  },
+  {
+    code: 'API016',
+    message: 'Reminder: Configure Helmet middleware for security headers',
+    severity: SecuritySeverity.Info,
+    patterns: [
+      /app\.listen\s*\(/i,
+      /createServer\s*\(/i,
+    ],
+    suppressIfNearby: [/helmet\s*\(/i, /helmet\(\)/i, /require\s*\(\s*['"]helmet['"]\)/i, /from\s+['"]helmet['"]/i],
+    suggestion:
+      'Use the Helmet middleware (npm install helmet) to set secure HTTP headers automatically: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, and more.',
+    category: SecurityCategory.APISecurity,
+    ruleType: RuleType.Informational,
+    filePatterns: { include: [/\.(?:js|ts|mjs|cjs)$/i] },
+  },
 ];

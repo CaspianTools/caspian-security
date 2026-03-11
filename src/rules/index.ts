@@ -20,7 +20,9 @@ import {
   kotlinFileRules,
   kotlinDatabaseRules,
   kotlinLoggingRules,
+  kotlinSecretsRules,
 } from './kotlinAndroidRules';
+import { securityHeadersRules } from './securityHeadersRules';
 
 const allRulesByCategory: Record<SecurityCategory, SecurityRule[]> = {
   [SecurityCategory.AuthAccessControl]: [...authRules, ...kotlinAuthRules],
@@ -31,12 +33,12 @@ const allRulesByCategory: Record<SecurityCategory, SecurityRule[]> = {
   [SecurityCategory.APISecurity]: apiSecurityRules,
   [SecurityCategory.DatabaseSecurity]: [...databaseRules, ...kotlinDatabaseRules],
   [SecurityCategory.FileHandling]: [...fileHandlingRules, ...kotlinFileRules],
-  [SecurityCategory.SecretsCredentials]: secretsRules,
+  [SecurityCategory.SecretsCredentials]: [...secretsRules, ...kotlinSecretsRules],
   [SecurityCategory.FrontendSecurity]: frontendRules,
   [SecurityCategory.BusinessLogicPayment]: businessLogicRules,
   [SecurityCategory.LoggingMonitoring]: [...loggingRules, ...kotlinLoggingRules],
   [SecurityCategory.DependenciesSupplyChain]: dependenciesRules,
-  [SecurityCategory.InfrastructureDeployment]: infrastructureRules,
+  [SecurityCategory.InfrastructureDeployment]: [...infrastructureRules, ...securityHeadersRules],
 };
 
 export function getAllRules(): SecurityRule[] {

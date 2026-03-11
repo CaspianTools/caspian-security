@@ -4,6 +4,20 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [8.3.0] - 2026-03-11
+
+### Added
+
+- 31 new security rules (133 → 164 total) across web application and Android categories
+- **Security Headers** (5 rules): HDR001–HDR005 — X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and Cache-Control for sensitive responses
+- **Input Validation** (5 rules): XSS012–XSS016 — Content-Type validation, server-side validation library reminders, HTML encoding, innerHTML sanitization, and template output encoding
+- **Frontend Security** (4 rules): FE010–FE013 — window.open with user URLs, sensitive data in web storage, DOM-based XSS source-to-sink detection, and open redirect prevention
+- **CSRF Protection** (2 rules): CSRF008–CSRF009 — double-submit cookie pattern and custom header AJAX protection reminders
+- **Database Security** (1 rule): DB013 — parameterized query reminder
+- **API Security** (2 rules): API015–API016 — server technology header leakage and Helmet middleware reminder
+- **Android/Kotlin** (12 rules): KT-AUTH004–006 (receiver export, implicit intents, tapjacking), KT-XSS002–004 (WebView content access, mixed content, SSL error bypass), KT-ENC003–006 (hardcoded keys, weak crypto, cleartext traffic, certificate pinning), KT-CRED001 (hardcoded API keys), KT-LOG002 (clipboard data leakage)
+- New `securityHeadersRules.ts` rule file for HTTP security header checks
+
 ## [8.2.0] - 2026-03-08
 
 ### Changed

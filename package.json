@@ -1,13 +1,13 @@
 {
   "name": "caspian-security",
   "displayName": "Caspian Security Extension",
-  "description": "Context-aware security analysis for VS Code — 133 rules, AI fixes with function-level understanding, confidence scoring, .caspianignore, and SARIF export for GitHub Security",
+  "description": "Context-aware security analysis for VS Code — 164 rules, AI fixes with function-level understanding, confidence scoring, .caspianignore, and SARIF export for GitHub Security",
   "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Caspian-Explorer/caspian-security"
   },
-  "version": "8.2.0",
+  "version": "8.3.0",
   "publisher": "CaspianTools",
   "license": "MIT",
   "engines": {

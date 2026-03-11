@@ -4,7 +4,7 @@
 
 A **production-ready VS Code security extension** with:
 
-- **133+ security rules** across 14 categories
+- **164+ security rules** across 14 categories
 - **Context-aware analysis** with confidence scoring
 - **AI-powered fixes** using Claude, GPT-4, or Gemini with function-level understanding
 - **Team-shareable `.caspianignore`** for managing false positives
@@ -73,7 +73,7 @@ caspian-security/
 │   ├── caspianIgnore.ts        # .caspianignore file parsing
 │   ├── dependencyChecker.ts    # npm outdated/audit + stack checking
 │   ├── types.ts                # TypeScript type definitions
-│   ├── rules/                  # 14 category rule files (133+ rules)
+│   ├── rules/                  # 14 category rule files (164+ rules)
 │   │   ├── index.ts            # Rule registry
 │   │   ├── authRules.ts        # AUTH001--AUTH007
 │   │   ├── inputValidationRules.ts  # XSS001--XSS011
@@ -114,7 +114,7 @@ caspian-security/
 | Dependencies & Supply Chain | 6 | DEP001--DEP006 |
 | Infrastructure & Deployment | 8 | INFRA001--INFRA008 |
 
-**Total: 133+ rules** (74 code-detectable + 59 informational)
+**Total: 164+ rules** (74 code-detectable + 59 informational)
 
 ---
 
@@ -159,7 +159,7 @@ All settings use the `caspianSecurity.*` namespace:
 | Metric | Value |
 |--------|-------|
 | **Source Code** | ~5300+ lines TypeScript |
-| **Security Rules** | 133+ across 14 categories |
+| **Security Rules** | 164+ across 14 categories |
 | **Languages Supported** | 8 |
 | **AI Providers** | 3 (Claude, GPT-4, Gemini) |
 | **Export Formats** | 3 (JSON, CSV, SARIF) |

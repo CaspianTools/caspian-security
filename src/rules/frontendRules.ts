@@ -115,4 +115,58 @@ export const frontendRules: SecurityRule[] = [
     category: SecurityCategory.FrontendSecurity,
     ruleType: RuleType.Informational,
   },
+  {
+    code: 'FE010',
+    message: 'window.open() with user-controlled URL',
+    severity: SecuritySeverity.Warning,
+    patterns: [
+      /window\.open\s*\(\s*(?:req|request|params|query|body|user|url|href|input|data)\b/i,
+      /window\.open\s*\(\s*\w+\s*[+,]/,
+    ],
+    negativePatterns: [/encodeURI/i, /validateUrl/i, /isValidUrl/i, /whitelist/i, /allowedUrl/i],
+    suggestion:
+      'Validate and sanitize URLs before passing to window.open(). Check the URL scheme (allow only https:) and validate against an allowlist to prevent javascript: or data: URL injection.',
+    category: SecurityCategory.FrontendSecurity,
+    ruleType: RuleType.CodeDetectable,
+  },
+  {
+    code: 'FE011',
+    message: 'Sensitive data stored in localStorage/sessionStorage',
+    severity: SecuritySeverity.Warning,
+    patterns: [
+      /(?:localStorage|sessionStorage)\.setItem\s*\(\s*['"].*(?:token|password|secret|session|auth|jwt|credential|apiKey|api_key)/i,
+    ],
+    suggestion:
+      'Do not store sensitive data (tokens, passwords, secrets) in localStorage or sessionStorage — they are accessible to any JavaScript on the page, including XSS payloads. Use httpOnly cookies for auth tokens.',
+    category: SecurityCategory.FrontendSecurity,
+    ruleType: RuleType.CodeDetectable,
+  },
+  {
+    code: 'FE012',
+    message: 'DOM-based XSS: user-controllable source flows into a DOM sink',
+    severity: SecuritySeverity.Error,
+    patterns: [
+      /(?:location\.hash|location\.search|location\.href|document\.URL|document\.referrer).*\.innerHTML/i,
+      /\.innerHTML\s*=.*(?:location\.hash|location\.search|location\.href|document\.URL|document\.referrer)/i,
+      /document\.write\s*\(.*(?:location\.hash|location\.search|location\.href|document\.URL|document\.referrer)/i,
+    ],
+    suggestion:
+      'Never pass user-controllable DOM sources (location.hash, location.search, document.referrer) into DOM sinks (innerHTML, document.write). Use textContent for safe insertion or sanitize with DOMPurify.',
+    category: SecurityCategory.FrontendSecurity,
+    ruleType: RuleType.CodeDetectable,
+  },
+  {
+    code: 'FE013',
+    message: 'Unvalidated redirect using user input — open redirect risk',
+    severity: SecuritySeverity.Warning,
+    patterns: [
+      /(?:window\.location|location\.href|location\.assign|location\.replace)\s*=\s*(?:req|request|params|query|url|href|input|data)\b/i,
+      /res\.redirect\s*\(\s*(?:req|request)\./i,
+    ],
+    negativePatterns: [/whitelist/i, /allowedUrl/i, /validateUrl/i, /isValidUrl/i, /safeRedirect/i],
+    suggestion:
+      'Validate redirect URLs against an allowlist of trusted domains. Never redirect to a user-supplied URL without validation — attackers can redirect users to phishing sites.',
+    category: SecurityCategory.FrontendSecurity,
+    ruleType: RuleType.CodeDetectable,
+  },
 ];

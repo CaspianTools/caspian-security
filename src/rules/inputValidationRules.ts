@@ -143,4 +143,74 @@ export const inputValidationRules: SecurityRule[] = [
     category: SecurityCategory.InputValidationXSS,
     ruleType: RuleType.CodeDetectable,
   },
+  {
+    code: 'XSS012',
+    message: 'Request handler without Content-Type validation',
+    severity: SecuritySeverity.Warning,
+    patterns: [
+      /app\.(?:post|put|patch)\s*\(/i,
+      /router\.(?:post|put|patch)\s*\(/i,
+    ],
+    suppressIfNearby: [/Content-Type/i, /express\.json/i, /bodyParser/i, /multer/i, /express\.urlencoded/i],
+    suggestion:
+      'Validate the Content-Type header on request handlers to ensure the body parser matches the expected format. Use express.json() or express.urlencoded() middleware.',
+    category: SecurityCategory.InputValidationXSS,
+    ruleType: RuleType.Informational,
+  },
+  {
+    code: 'XSS013',
+    message: 'Reminder: Use a server-side validation library (joi, zod, yup, express-validator)',
+    severity: SecuritySeverity.Info,
+    patterns: [
+      /req\.body\.\w+/i,
+    ],
+    suppressIfNearby: [/joi\./i, /zod\./i, /yup\./i, /express-validator/i, /\.validate\s*\(/i, /\.parse\s*\(/i, /\.safeParse\s*\(/i],
+    suggestion:
+      'Validate all request body fields with a schema validation library (joi, zod, yup, or express-validator) to enforce types, lengths, and formats on the server side.',
+    category: SecurityCategory.InputValidationXSS,
+    ruleType: RuleType.Informational,
+  },
+  {
+    code: 'XSS014',
+    message: 'Response sends user input without HTML encoding',
+    severity: SecuritySeverity.Warning,
+    patterns: [
+      /res\.(?:send|write)\s*\(.*(?:req|request)\./i,
+      /response\.(?:send|write)\s*\(.*(?:req|request)\./i,
+    ],
+    negativePatterns: [/escapeHtml/i, /encode/i, /sanitize/i, /DOMPurify/i, /res\.json/i],
+    suggestion:
+      'Apply HTML entity encoding (e.g., escapeHtml, he.encode) before reflecting user input in HTML responses to prevent reflected XSS.',
+    category: SecurityCategory.InputValidationXSS,
+    ruleType: RuleType.CodeDetectable,
+  },
+  {
+    code: 'XSS015',
+    message: 'innerHTML assignment without sanitization library',
+    severity: SecuritySeverity.Warning,
+    patterns: [
+      /\.innerHTML\s*=/,
+    ],
+    suppressIfNearby: [/DOMPurify/i, /sanitize-?html/i, /xss\s*\(/i, /sanitize\s*\(/i, /purify/i],
+    suggestion:
+      'Sanitize content with DOMPurify.sanitize() or sanitize-html before assigning to innerHTML. Prefer textContent or createElement for static text.',
+    category: SecurityCategory.InputValidationXSS,
+    ruleType: RuleType.CodeDetectable,
+  },
+  {
+    code: 'XSS016',
+    message: 'Reminder: Apply context-appropriate output encoding in templates',
+    severity: SecuritySeverity.Info,
+    patterns: [
+      /res\.render\s*\(/i,
+      /\.ejs/i,
+      /\.hbs/i,
+      /\.pug/i,
+    ],
+    suppressIfNearby: [/escapeHtml/i, /encodeURIComponent/i, /sanitize/i, /autoEscape/i],
+    suggestion:
+      'Ensure your template engine auto-escapes output by default. Use context-appropriate encoding: HTML entities for HTML context, encodeURIComponent for URLs, JSON.stringify for JS context.',
+    category: SecurityCategory.InputValidationXSS,
+    ruleType: RuleType.Informational,
+  },
 ];

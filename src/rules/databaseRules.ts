@@ -170,4 +170,18 @@ export const databaseRules: SecurityRule[] = [
     category: SecurityCategory.DatabaseSecurity,
     ruleType: RuleType.Informational,
   },
+  {
+    code: 'DB013',
+    message: 'Reminder: Use parameterized queries for all database operations',
+    severity: SecuritySeverity.Info,
+    patterns: [
+      /\.query\s*\(\s*['"`]/i,
+      /\.execute\s*\(\s*['"`]/i,
+    ],
+    suppressIfNearby: [/\?\s*,/i, /\$\d/, /:param/i, /parameterized/i, /prepared/i, /bindParam/i],
+    suggestion:
+      'Always use parameterized queries or prepared statements with bind variables instead of string queries. This prevents SQL injection even if input is not explicitly sanitized.',
+    category: SecurityCategory.DatabaseSecurity,
+    ruleType: RuleType.Informational,
+  },
 ];

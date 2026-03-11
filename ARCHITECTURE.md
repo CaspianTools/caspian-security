@@ -54,10 +54,10 @@
     │             │                 │                  │
 ┌───▼──────┐ ┌───▼──────────┐ ┌───▼──────────┐ ┌────▼─────────┐
 │ Rules    │ │ Confidence   │ │ Context      │ │ .caspian     │
-│ (14 cat  │ │ Analyzer     │ │ Extractor    │ │ ignore       │
+│ (15 rule │ │ Analyzer     │ │ Extractor    │ │ ignore       │
 │ files)   │ │              │ │              │ │              │
 │          │ │- Critical    │ │- Function    │ │- Parse file  │
-│- 133+    │ │- Safe        │ │  scope       │ │- Watch       │
+│- 164+    │ │- Safe        │ │  scope       │ │- Watch       │
 │  rules   │ │- Verify      │ │- Variable    │ │- Match rules │
 │- Patterns│ │  needed      │ │  definitions │ │- Persist     │
 └──────────┘ └──────────────┘ └──────────────┘ └──────────────┘
@@ -111,7 +111,7 @@ ResultsStore → Results panel + SARIF/JSON/CSV export
 - Telemetry service and learning dashboard initialization
 
 ### analyzer.ts (Security Engine)
-- Line-by-line pattern matching against 133+ rules
+- Line-by-line pattern matching against 164+ rules
 - Context-aware filtering (comments, strings, JSX text)
 - Negative pattern and suppress-if-nearby logic
 - Learned safe pattern suppression via codebase profile
@@ -140,7 +140,7 @@ Each file exports an array of `SecurityRule` objects:
 | `dependenciesRules.ts` | Dependencies & Supply Chain | DEP001--DEP006 |
 | `infrastructureRules.ts` | Infrastructure & Deployment | INFRA001--INFRA008 |
 
-**Total: 133+ rules** (74 code-detectable + 59 informational/advisory)
+**Total: 164+ rules** (74 code-detectable + 59 informational/advisory)
 
 ### Security Rule Structure
 
@@ -308,7 +308,7 @@ interface SecurityRule {
 | `scanInsights.ts` | ~230 | Actionable intelligence generation |
 | `telemetryService.ts` | ~240 | Opt-in anonymized rule stats |
 | `learningPanel.ts` | ~300 | Learning dashboard webview |
-| `rules/` (14 files) | ~1200 | 133+ security rule definitions |
+| `rules/` (14 files) | ~1200 | 164+ security rule definitions |
 | **Total** | **~7950+** | |
 
 **Memory usage**: ~5-10 MB

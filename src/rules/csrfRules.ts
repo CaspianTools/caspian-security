@@ -88,4 +88,33 @@ export const csrfRules: SecurityRule[] = [
     category: SecurityCategory.CSRFProtection,
     ruleType: RuleType.Informational,
   },
+  {
+    code: 'CSRF008',
+    message: 'Reminder: Consider double-submit cookie pattern for CSRF protection',
+    severity: SecuritySeverity.Info,
+    patterns: [
+      /res\.cookie\s*\(/i,
+      /setCookie\s*\(/i,
+    ],
+    suppressIfNearby: [/csrf/i, /xsrf/i, /double.?submit/i, /csrfToken/i],
+    suggestion:
+      'For stateless APIs, consider the double-submit cookie pattern: set a random CSRF token in a cookie and require the client to send the same value in a header. Verify both match on the server.',
+    category: SecurityCategory.CSRFProtection,
+    ruleType: RuleType.Informational,
+  },
+  {
+    code: 'CSRF009',
+    message: 'Reminder: Use custom request header (X-Requested-With) for AJAX CSRF protection',
+    severity: SecuritySeverity.Info,
+    patterns: [
+      /XMLHttpRequest/i,
+      /fetch\s*\(\s*['"`]/i,
+      /axios\.\w+\s*\(/i,
+    ],
+    suppressIfNearby: [/X-Requested-With/i, /csrf/i, /xsrf/i, /X-CSRF/i, /csrfToken/i],
+    suggestion:
+      'Require a custom header (e.g., X-Requested-With) on state-changing AJAX requests. Browsers enforce CORS preflight for custom headers, preventing simple cross-origin CSRF attacks.',
+    category: SecurityCategory.CSRFProtection,
+    ruleType: RuleType.Informational,
+  },
 ];
