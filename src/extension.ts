@@ -130,7 +130,7 @@ let securityScore: SecurityScoreService;
 
 export function activate(context: vscode.ExtensionContext) {
   try {
-    console.log('Caspian Security Extension activated');
+    console.log('Caspian Security activated');
 
     configManager = ConfigManager.getInstance();
     diagnosticsManager = new DiagnosticsManager();
@@ -282,7 +282,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
     });
 
-    console.log('Caspian Security Extension initialized successfully');
+    console.log('Caspian Security initialized successfully');
   } catch (error) {
     console.error('Caspian Security failed to activate:', error);
     vscode.window.showErrorMessage('Caspian Security failed to activate. See Output for details.');
@@ -2154,5 +2154,5 @@ function restoreCachedResults(workspaceRoot: string): void {
 }
 
 export function deactivate() {
-  console.log('Caspian Security Extension deactivated');
+  console.log('Caspian Security deactivated');
 }

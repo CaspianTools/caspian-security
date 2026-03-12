@@ -1,4 +1,4 @@
-# Caspian Security Extension - Quick Start Guide
+# Caspian Security - Quick Start Guide
 
 ## 5-Minute Setup
 

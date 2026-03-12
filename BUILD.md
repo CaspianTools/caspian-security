@@ -1,4 +1,4 @@
-# Caspian Security Extension - Build & Development Guide
+# Caspian Security - Build & Development Guide
 
 ## Prerequisites
 

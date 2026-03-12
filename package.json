@@ -1,13 +1,13 @@
 {
   "name": "caspian-security",
-  "displayName": "Caspian Security Extension",
+  "displayName": "Caspian Security",
   "description": "Context-aware security analysis for VS Code — 164 rules, AI fixes, security score, welcome experience, triage mode, PR-scoped scanning, test suite, and CI pipeline",
   "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Caspian-Explorer/caspian-security"
   },
-  "version": "9.0.0",
+  "version": "9.0.1",
   "publisher": "CaspianTools",
   "license": "MIT",
   "engines": {

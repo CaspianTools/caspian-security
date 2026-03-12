@@ -4,6 +4,12 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [9.0.1] - 2026-03-12
+
+### Changed
+
+- Rename display name from "Caspian Security Extension" to "Caspian Security" across package.json, docs, and source code
+
 ## [9.0.0] - 2026-03-12
 
 ### Added

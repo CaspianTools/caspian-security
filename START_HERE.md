@@ -1,4 +1,4 @@
-# Caspian Security Extension - Start Here
+# Caspian Security - Start Here
 
 ## What You Have
 

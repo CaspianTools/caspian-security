@@ -1,4 +1,4 @@
-# Caspian Security Extension - Setup & Deployment Guide
+# Caspian Security - Setup & Deployment Guide
 
 ## What's Included
 
