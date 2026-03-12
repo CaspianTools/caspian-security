@@ -30,6 +30,13 @@ What sets it apart: **context-aware intelligence**. The scanner classifies detec
 - **Performance safeguards** -- automatic skipping of minified/generated files, configurable file size limit, per-file analysis timeout, and line length guards to prevent high CPU on large codebases
 - **Learning Intelligence** -- the extension learns from every scan, fix, ignore, and false positive to improve accuracy over time: adaptive confidence scoring, fix pattern memory for instant replays, codebase-specific safe pattern learning, regression detection, and actionable insights
 - **Security Task Management** -- 23 recurring security tasks across all 14 categories with configurable intervals, overdue reminders, auto-completion on scans, per-project persistence, and a dedicated detail panel for viewing and managing tasks
+- **Security Score** -- real-time 0-100 score in the status bar based on severity-weighted findings, with grade (A-F) and click-for-details
+- **Welcome Experience** -- first-run onboarding panel with workspace scan, posture overview, feature walkthrough, and quick start guide
+- **Triage Mode** -- guided walkthrough of all pending issues with one-click AI Fix, Ignore, or False Positive actions
+- **PR-Scoped Scanning** -- scan only files changed on the current branch vs main/master for focused code review
+- **Bulk Actions** -- "Ignore All" by rule code and "Why?" inline explanations on every finding
+- **Test Suite** -- 230+ unit tests validating all 164 rules, the ignore system, and the scoring algorithm
+- **CI Pipeline** -- GitHub Actions with lint, compile, test on Node 18/20, and VSIX packaging
 
 ---
 

@@ -4,6 +4,27 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [9.0.0] - 2026-03-12
+
+### Added
+
+- **Welcome Experience** — first-run onboarding webview panel that shows on install with workspace scan, security posture overview, feature highlights, and quick start guide
+- **Security Score** — real-time 0-100 security score in the status bar with grade (A-F), severity-weighted calculation, and click-for-details interaction
+- **Triage Session** — guided walkthrough command that navigates to each pending issue one by one with AI Fix / Ignore / False Positive / Skip options
+- **Bulk Ignore** — "Ignore All [RULE]" button on every finding in the Results Panel to bulk-ignore all instances of a rule code
+- **Rule Explanation** — "Why?" button on every finding that shows the rule details, category, severity, and remediation guidance in a modal dialog
+- **PR-Scoped Scanning** — "Scan Branch Changes" command that scans only files changed on the current branch vs main/master, with branch name in scan metadata
+- **Test Suite** — 230 unit tests across 3 test suites: rule structure validation (211 tests for all 164 rules), caspianIgnore parsing/matching tests, and SecurityScore calculation tests
+- **CI Pipeline** — GitHub Actions workflow (`ci.yml`) with lint, compile, test on Node 18/20, and VSIX packaging
+- **Jest + ts-jest** testing infrastructure with vscode module mock
+
+### Changed
+
+- Results Panel actions cell now includes "Ignore All [CODE]" and "Why?" buttons for every pending issue
+- Status bar now shows two items: the main Caspian status and the security score badge
+- `package.json` adds 6 new commands: Welcome, Security Score, Triage Session, Scan Branch Changes, Ignore All By Rule, Explain Rule
+- Git integration gains `getBranchChangedFiles()` and `getCurrentBranch()` methods for PR-scoped scanning
+
 ## [8.3.0] - 2026-03-11
 
 ### Added

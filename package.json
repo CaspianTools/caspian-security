@@ -1,13 +1,13 @@
 {
   "name": "caspian-security",
   "displayName": "Caspian Security Extension",
-  "description": "Context-aware security analysis for VS Code — 164 rules, AI fixes with function-level understanding, confidence scoring, .caspianignore, and SARIF export for GitHub Security",
+  "description": "Context-aware security analysis for VS Code — 164 rules, AI fixes, security score, welcome experience, triage mode, PR-scoped scanning, test suite, and CI pipeline",
   "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Caspian-Explorer/caspian-security"
   },
-  "version": "8.3.0",
+  "version": "9.0.0",
   "publisher": "CaspianTools",
   "license": "MIT",
   "engines": {
@@ -219,6 +219,22 @@
       {
         "command": "caspian-security.showTaskDetail",
         "title": "Caspian Security: Show Task Detail"
+      },
+      {
+        "command": "caspian-security.showWelcome",
+        "title": "Caspian Security: Welcome"
+      },
+      {
+        "command": "caspian-security.showSecurityScore",
+        "title": "Caspian Security: Show Security Score"
+      },
+      {
+        "command": "caspian-security.triageSession",
+        "title": "Caspian Security: Start Triage Session"
+      },
+      {
+        "command": "caspian-security.scanBranchChanges",
+        "title": "Caspian Security: Scan Branch Changes (PR Scope)"
       }
     ],
     "viewsContainers": {
@@ -298,6 +314,14 @@
         },
         {
           "command": "caspian-security.showTaskDetail",
+          "when": "false"
+        },
+        {
+          "command": "caspian-security.ignoreAllByRule",
+          "when": "false"
+        },
+        {
+          "command": "caspian-security.explainRule",
           "when": "false"
         }
       ]
@@ -488,15 +512,18 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
+    "test": "jest --forceExit",
     "check-updates": "npm run compile && node out/cli/checkUpdates.js"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.0.0",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.6",
     "typescript": "^5.0.0"
-  },
-  "dependencies": {}
+  }
 }

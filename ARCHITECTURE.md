@@ -99,16 +99,19 @@ ResultsStore → Results panel + SARIF/JSON/CSV export
 ### extension.ts (Main Controller)
 - Extension lifecycle (activate/deactivate)
 - Event registration with 1-second debounce
-- Command registration (28 commands)
+- Command registration (34 commands)
 - AI fix workflow (generate, diff preview, apply, verify)
 - Fix pattern memory check before AI API calls (offers cached fixes)
 - Learning event emission at every user action (fix, ignore, FP, verify, fix-failed)
 - `.caspianignore` loading and file watching
 - Informational filtering and internal-path severity reduction
 - Workspace scanning with batched progress
-- Git uncommitted file scanning
+- Git uncommitted file scanning and branch-scoped scanning
 - Dependency checking integration
 - Telemetry service and learning dashboard initialization
+- Welcome panel (first-run onboarding) and security score display
+- Triage session (guided walkthrough of pending issues)
+- Bulk ignore and rule explanation commands
 
 ### analyzer.ts (Security Engine)
 - Line-by-line pattern matching against 164+ rules

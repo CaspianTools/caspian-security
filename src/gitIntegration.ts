@@ -109,6 +109,69 @@ export class GitIntegration implements vscode.Disposable {
       .map(f => vscode.Uri.file(path.join(workspaceRoot, f)));
   }
 
+  /**
+   * Get files changed on the current branch compared to main/master.
+   * Returns empty array if on main or if git is not available.
+   */
+  async getBranchChangedFiles(): Promise<vscode.Uri[]> {
+    const workspaceRoot = this.getWorkspaceRoot();
+    if (!workspaceRoot) { return []; }
+
+    try {
+      // Determine the base branch (main or master)
+      let baseBranch = 'main';
+      try {
+        execSync('git rev-parse --verify main', { cwd: workspaceRoot, stdio: 'pipe' });
+      } catch {
+        try {
+          execSync('git rev-parse --verify master', { cwd: workspaceRoot, stdio: 'pipe' });
+          baseBranch = 'master';
+        } catch {
+          return []; // No main or master branch
+        }
+      }
+
+      // Check current branch
+      const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: workspaceRoot, stdio: 'pipe' })
+        .toString().trim();
+
+      if (currentBranch === baseBranch) {
+        return []; // On main branch, no branch-scoped files
+      }
+
+      // Get merge-base (where this branch diverged)
+      const mergeBase = execSync(`git merge-base ${baseBranch} HEAD`, { cwd: workspaceRoot, stdio: 'pipe' })
+        .toString().trim();
+
+      // Get files changed since merge-base
+      const changedFiles = execSync(`git diff --name-only ${mergeBase}...HEAD`, { cwd: workspaceRoot, stdio: 'pipe' })
+        .toString().trim();
+
+      if (!changedFiles) { return []; }
+
+      return changedFiles
+        .split('\n')
+        .filter(f => f.length > 0)
+        .map(f => vscode.Uri.file(path.join(workspaceRoot, f)));
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Get the current branch name.
+   */
+  getCurrentBranch(): string | undefined {
+    const workspaceRoot = this.getWorkspaceRoot();
+    if (!workspaceRoot) { return undefined; }
+    try {
+      return execSync('git rev-parse --abbrev-ref HEAD', { cwd: workspaceRoot, stdio: 'pipe' })
+        .toString().trim();
+    } catch {
+      return undefined;
+    }
+  }
+
   private getWorkspaceRoot(): string | undefined {
     return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   }

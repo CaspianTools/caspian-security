@@ -31,6 +31,8 @@ import { TaskManager } from './taskManager';
 import { TaskChecklistViewProvider } from './taskTreeProvider';
 import { registerTaskCommands } from './taskCommands';
 import { TaskDetailPanel } from './taskDetailPanel';
+import { WelcomePanel } from './welcomePanel';
+import { SecurityScoreService } from './securityScore';
 
 const BATCH_SIZE = 50;
 
@@ -123,6 +125,8 @@ let learningPanel: LearningPanel;
 let taskStore: TaskStore;
 let taskManager: TaskManager;
 let taskChecklistProvider: TaskChecklistViewProvider;
+let welcomePanel: WelcomePanel;
+let securityScore: SecurityScoreService;
 
 export function activate(context: vscode.ExtensionContext) {
   try {
@@ -140,6 +144,13 @@ export function activate(context: vscode.ExtensionContext) {
     dependencyOutputChannel = vscode.window.createOutputChannel('Caspian Security: Dependencies');
     aiSettingsPanel = new AISettingsPanel(context.extensionUri, context.secrets, aiFixService);
     fixPreviewProvider = new FixPreviewContentProvider();
+
+    // Initialize welcome panel and security score
+    const extVersion = context.extension?.packageJSON?.version || 'unknown';
+    welcomePanel = new WelcomePanel(context.extensionUri, resultsStore, context.globalState, extVersion);
+    securityScore = new SecurityScoreService(resultsStore, fixTracker);
+    context.subscriptions.push(welcomePanel);
+    context.subscriptions.push(securityScore);
 
     context.subscriptions.push(configManager);
     context.subscriptions.push(diagnosticsManager);
@@ -258,6 +269,18 @@ export function activate(context: vscode.ExtensionContext) {
     registerCommands(context);
     registerCategoryCommands(context);
     registerDocumentListeners(context);
+
+    // Show welcome panel on first activation
+    if (welcomePanel.shouldShowOnActivation()) {
+      welcomePanel.show();
+    }
+
+    // Forward scan results to welcome panel (only updates if panel is already visible)
+    resultsStore.onDidChange(() => {
+      if (welcomePanel) {
+        welcomePanel.updateResults();
+      }
+    });
 
     console.log('Caspian Security Extension initialized successfully');
   } catch (error) {
@@ -634,6 +657,68 @@ function registerCommands(context: vscode.ExtensionContext) {
     })
   );
 
+  // Scan Branch Changes (PR-scoped)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('caspian-security.scanBranchChanges', async () => {
+      const branch = gitIntegration.getCurrentBranch();
+      if (!branch || branch === 'main' || branch === 'master') {
+        vscode.window.showInformationMessage('Caspian Security: You are on the main branch. Switch to a feature branch to scan branch changes.');
+        return;
+      }
+
+      const changedFiles = await gitIntegration.getBranchChangedFiles();
+      if (changedFiles.length === 0) {
+        vscode.window.showInformationMessage(`Caspian Security: No changed files found on branch "${branch}".`);
+        return;
+      }
+
+      // Filter to supported language files
+      const enabledLanguages = configManager.get<string[]>('enabledLanguages', Object.keys(LANGUAGE_EXTENSIONS));
+      const supportedExtensions = new Set<string>();
+      for (const lang of enabledLanguages) {
+        const exts = LANGUAGE_EXTENSIONS[lang];
+        if (exts) { exts.forEach((ext: string) => supportedExtensions.add(ext)); }
+      }
+      const supportedFiles = changedFiles.filter(uri => {
+        const ext = path.extname(uri.fsPath).slice(1).toLowerCase();
+        return supportedExtensions.has(ext);
+      });
+
+      if (supportedFiles.length === 0) {
+        vscode.window.showInformationMessage(`Caspian Security: No supported source files changed on branch "${branch}".`);
+        return;
+      }
+
+      resultsStore.clearAll();
+
+      await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: `Caspian: Scanning ${supportedFiles.length} changed file(s) on ${branch}`, cancellable: true },
+        async (progress, token) => {
+          const startTime = Date.now();
+
+          for (let i = 0; i < supportedFiles.length; i++) {
+            if (token.isCancellationRequested) { break; }
+            progress.report({ increment: (100 / supportedFiles.length), message: path.basename(supportedFiles[i].fsPath) });
+
+            try {
+              const doc = await vscode.workspace.openTextDocument(supportedFiles[i]);
+              await checkDocument(doc);
+            } catch { /* file may not be accessible */ }
+          }
+
+          const duration = Date.now() - startTime;
+          resultsStore.setScanMeta(duration, `Branch: ${branch}`);
+
+          const totalIssues = resultsStore.getTotalIssueCount();
+          vscode.window.showInformationMessage(
+            `Caspian Security: Found ${totalIssues} issue(s) in ${supportedFiles.length} changed file(s) on branch "${branch}".`
+          );
+          resultsPanel.show();
+        }
+      );
+    })
+  );
+
   // New command: Check Dependency & Stack Updates
   context.subscriptions.push(
     vscode.commands.registerCommand('caspian-security.checkDependencyUpdates', async () => {
@@ -748,6 +833,20 @@ function registerCommands(context: vscode.ExtensionContext) {
     })
   );
 
+  // Welcome Panel
+  context.subscriptions.push(
+    vscode.commands.registerCommand('caspian-security.showWelcome', () => {
+      welcomePanel.show();
+    })
+  );
+
+  // Security Score (show details)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('caspian-security.showSecurityScore', () => {
+      securityScore.showScoreDetails();
+    })
+  );
+
   // Learning Dashboard
   context.subscriptions.push(
     vscode.commands.registerCommand('caspian-security.showLearningDashboard', () => {
@@ -802,6 +901,179 @@ function registerCommands(context: vscode.ExtensionContext) {
         await telemetryService.showPreview();
       } else {
         vscode.window.showInformationMessage('Caspian Security: Telemetry service not yet initialized.');
+      }
+    })
+  );
+
+  // Ignore All By Rule — bulk-ignore all findings with a specific rule code
+  context.subscriptions.push(
+    vscode.commands.registerCommand('caspian-security.ignoreAllByRule', async (ruleCode: string) => {
+      if (!ruleCode) { return; }
+
+      const allResults = resultsStore.getAllResults();
+      let count = 0;
+      for (const result of allResults) {
+        for (const issue of result.issues) {
+          if (issue.code === ruleCode) {
+            const key = FixTracker.makeKey(result.relativePath, issue.code, issue.line, issue.pattern);
+            const record = fixTracker.getRecord(key);
+            if (!record || record.status === 'pending') {
+              fixTracker.markIgnored(key, result.filePath, result.relativePath, issue.code, issue.line, issue.pattern);
+              count++;
+            }
+          }
+        }
+      }
+
+      // Add a file-wide ignore entry to .caspianignore
+      const wsRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      if (wsRoot) {
+        appendIgnoreEntry(wsRoot, {
+          ruleCode,
+          filePath: '*',
+          reason: `Bulk-ignored all ${ruleCode} findings`,
+        });
+      }
+
+      vscode.window.showInformationMessage(`Caspian Security: Ignored ${count} finding(s) for rule ${ruleCode}.`);
+    })
+  );
+
+  // Explain Rule — show what the rule detects and why it matters
+  context.subscriptions.push(
+    vscode.commands.registerCommand('caspian-security.explainRule', async (ruleCode: string) => {
+      if (!ruleCode) { return; }
+      const rule = analyzer.getRuleByCode(ruleCode);
+      if (!rule) {
+        vscode.window.showInformationMessage(`No details found for rule ${ruleCode}.`);
+        return;
+      }
+
+      const sevLabel = rule.severity === SecuritySeverity.Error ? 'Error'
+        : rule.severity === SecuritySeverity.Warning ? 'Warning' : 'Info';
+      const catLabel = CATEGORY_LABELS[rule.category] || rule.category;
+
+      const detail = [
+        `Rule: ${rule.code}`,
+        `Category: ${catLabel}`,
+        `Severity: ${sevLabel}`,
+        ``,
+        `What it detects:`,
+        rule.message,
+        ``,
+        `Why it matters:`,
+        rule.suggestion,
+      ].join('\n');
+
+      const choice = await vscode.window.showInformationMessage(
+        `${rule.code} (${catLabel}) — ${rule.message}`,
+        { modal: true, detail },
+        'Got it'
+      );
+    })
+  );
+
+  // Triage Session — guided walkthrough of all pending issues
+  context.subscriptions.push(
+    vscode.commands.registerCommand('caspian-security.triageSession', async () => {
+      const allResults = resultsStore.getAllResults();
+      const pendingIssues: Array<{
+        filePath: string; relativePath: string; line: number; column: number;
+        code: string; pattern: string; message: string; suggestion: string;
+        category: string; severity: string; issueKey: string;
+      }> = [];
+
+      for (const result of allResults) {
+        for (const issue of result.issues) {
+          const key = FixTracker.makeKey(result.relativePath, issue.code, issue.line, issue.pattern);
+          const record = fixTracker.getRecord(key);
+          if (!record || record.status === 'pending') {
+            pendingIssues.push({
+              filePath: result.filePath,
+              relativePath: result.relativePath,
+              line: issue.line,
+              column: issue.column,
+              code: issue.code,
+              pattern: issue.pattern,
+              message: issue.message,
+              suggestion: issue.suggestion,
+              category: CATEGORY_LABELS[issue.category] || issue.category,
+              severity: issue.severity === SecuritySeverity.Error ? 'Error'
+                : issue.severity === SecuritySeverity.Warning ? 'Warning' : 'Info',
+              issueKey: key,
+            });
+          }
+        }
+      }
+
+      if (pendingIssues.length === 0) {
+        vscode.window.showInformationMessage('Caspian Security: No pending issues to triage. Run a workspace scan first.');
+        return;
+      }
+
+      // Sort: errors first, then warnings, then info
+      const sevOrder: Record<string, number> = { Error: 0, Warning: 1, Info: 2 };
+      pendingIssues.sort((a, b) => (sevOrder[a.severity] ?? 3) - (sevOrder[b.severity] ?? 3));
+
+      let idx = 0;
+      while (idx < pendingIssues.length) {
+        const issue = pendingIssues[idx];
+        const remaining = pendingIssues.length - idx;
+
+        // Navigate to the file/line
+        try {
+          const uri = vscode.Uri.file(issue.filePath);
+          const doc = await vscode.workspace.openTextDocument(uri);
+          const pos = new vscode.Position(issue.line, issue.column);
+          await vscode.window.showTextDocument(doc, {
+            selection: new vscode.Range(pos, pos),
+            viewColumn: vscode.ViewColumn.One,
+          });
+        } catch { /* file may not exist */ }
+
+        const choice = await vscode.window.showWarningMessage(
+          `[${idx + 1}/${pendingIssues.length}] ${issue.severity}: ${issue.code} — ${issue.message}`,
+          { modal: false, detail: `File: ${issue.relativePath}:${issue.line + 1}\nCategory: ${issue.category}\n\nSuggestion: ${issue.suggestion}` },
+          'AI Fix',
+          'Ignore',
+          'False Positive',
+          'Skip',
+          'Stop Triage'
+        );
+
+        if (choice === 'AI Fix') {
+          await vscode.commands.executeCommand('caspian-security.aiFixIssue', {
+            filePath: issue.filePath, relativePath: issue.relativePath,
+            line: issue.line, column: issue.column, code: issue.code,
+            pattern: issue.pattern, message: issue.message,
+            suggestion: issue.suggestion, category: issue.category,
+            severity: issue.severity,
+          });
+          idx++;
+        } else if (choice === 'Ignore') {
+          await vscode.commands.executeCommand('caspian-security.ignoreIssue', {
+            filePath: issue.filePath, relativePath: issue.relativePath,
+            line: issue.line, code: issue.code, pattern: issue.pattern,
+          });
+          idx++;
+        } else if (choice === 'False Positive') {
+          await vscode.commands.executeCommand('caspian-security.markFalsePositive', {
+            filePath: issue.filePath, relativePath: issue.relativePath,
+            line: issue.line, code: issue.code, pattern: issue.pattern,
+          });
+          idx++;
+        } else if (choice === 'Skip') {
+          idx++;
+        } else {
+          // Stop Triage or dismiss
+          break;
+        }
+      }
+
+      if (idx >= pendingIssues.length) {
+        vscode.window.showInformationMessage('Caspian Security: Triage complete! All issues reviewed.');
+      } else {
+        vscode.window.showInformationMessage(`Caspian Security: Triage paused. ${pendingIssues.length - idx} issue(s) remaining.`);
       }
     })
   );

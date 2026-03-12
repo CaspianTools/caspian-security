@@ -215,6 +215,14 @@ export class ResultsPanel implements vscode.Disposable {
         await vscode.commands.executeCommand('caspian-security.verifyAllFixes');
         break;
       }
+      case 'ignoreAllByRule': {
+        await vscode.commands.executeCommand('caspian-security.ignoreAllByRule', message.ruleCode);
+        break;
+      }
+      case 'explainRule': {
+        await vscode.commands.executeCommand('caspian-security.explainRule', message.ruleCode);
+        break;
+      }
     }
   }
 
@@ -489,6 +497,26 @@ export class ResultsPanel implements vscode.Disposable {
       border-radius: 2px;
     }
     .btn-fp:hover { background: var(--vscode-button-secondaryHoverBackground); }
+    .btn-why {
+      background: transparent;
+      color: var(--vscode-textLink-foreground, #3794ff);
+      border: none;
+      padding: 2px 6px;
+      cursor: pointer;
+      font-size: 10px;
+      text-decoration: underline;
+    }
+    .btn-why:hover { color: var(--vscode-textLink-activeForeground, #3794ff); }
+    .btn-ignore-all {
+      background: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+      border: none;
+      padding: 2px 8px;
+      cursor: pointer;
+      font-size: 10px;
+      border-radius: 2px;
+    }
+    .btn-ignore-all:hover { background: var(--vscode-button-secondaryHoverBackground); }
     .btn-reset {
       background: transparent;
       color: var(--vscode-descriptionForeground);
@@ -813,7 +841,9 @@ export class ResultsPanel implements vscode.Disposable {
     return badge + '<button class="btn-fix" data-key="' + escapeAttr(item.issueKey) + '">AI Fix</button>'
       + '<button class="btn-verify" data-key="' + escapeAttr(item.issueKey) + '">Verify</button>'
       + '<button class="btn-ignore" data-key="' + escapeAttr(item.issueKey) + '">Ignore</button>'
-      + '<button class="btn-fp" data-key="' + escapeAttr(item.issueKey) + '">False Positive</button>';
+      + '<button class="btn-fp" data-key="' + escapeAttr(item.issueKey) + '">False Positive</button>'
+      + '<button class="btn-ignore-all" data-code="' + escapeAttr(item.code) + '">Ignore All ' + escapeHtml(item.code) + '</button>'
+      + '<button class="btn-why" data-code="' + escapeAttr(item.code) + '" data-msg="' + escapeAttr(item.message) + '">Why?</button>';
   }
 
   function renderTable() {
@@ -842,7 +872,7 @@ export class ResultsPanel implements vscode.Disposable {
     // Navigate on row click (but not on button clicks)
     resultsBody.querySelectorAll('tr.issue-row, tr.suggestion-row').forEach(row => {
       row.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-fix') || e.target.closest('.btn-ignore') || e.target.closest('.btn-reset') || e.target.closest('.btn-verify') || e.target.closest('.btn-fp')) return;
+        if (e.target.closest('.btn-fix') || e.target.closest('.btn-ignore') || e.target.closest('.btn-reset') || e.target.closest('.btn-verify') || e.target.closest('.btn-fp') || e.target.closest('.btn-ignore-all') || e.target.closest('.btn-why')) return;
         const file = row.getAttribute('data-file');
         const line = parseInt(row.getAttribute('data-line'));
         const col = parseInt(row.getAttribute('data-col'));
@@ -933,6 +963,24 @@ export class ResultsPanel implements vscode.Disposable {
             }
           });
         }
+      });
+    });
+
+    // "Ignore All" buttons — bulk ignore all findings with the same rule code
+    resultsBody.querySelectorAll('.btn-ignore-all').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const code = btn.getAttribute('data-code');
+        vscode.postMessage({ type: 'ignoreAllByRule', ruleCode: code });
+      });
+    });
+
+    // "Why?" buttons — show rule explanation
+    resultsBody.querySelectorAll('.btn-why').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const code = btn.getAttribute('data-code');
+        vscode.postMessage({ type: 'explainRule', ruleCode: code });
       });
     });
   }
