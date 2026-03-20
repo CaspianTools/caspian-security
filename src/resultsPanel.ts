@@ -384,27 +384,63 @@ export class ResultsPanel implements vscode.Disposable {
       padding: 8px 16px;
       border-bottom: 1px solid var(--vscode-panel-border);
       display: flex;
-      gap: 12px;
+      gap: 8px;
       flex-wrap: wrap;
       align-items: center;
     }
     .filter-group { display: flex; gap: 6px; align-items: center; }
-    .filter-group label { font-size: 11px; color: var(--vscode-descriptionForeground); white-space: nowrap; }
+    .filter-group-search { flex: 1; min-width: 160px; }
     .filter-group select, .filter-group input[type="text"] {
       background: var(--vscode-input-background);
       color: var(--vscode-input-foreground);
-      border: 1px solid var(--vscode-input-border, transparent);
+      border: 1px solid var(--vscode-input-border, rgba(128,128,128,0.35));
       padding: 3px 6px;
       font-size: 12px;
       font-family: inherit;
-      border-radius: 2px;
+      border-radius: 4px;
     }
-    .filter-group input[type="text"] { width: 200px; }
-    .checkbox-group { display: flex; gap: 8px; align-items: center; }
-    .checkbox-group label {
-      display: flex; gap: 3px; align-items: center; font-size: 12px;
-      color: var(--vscode-editor-foreground); cursor: pointer;
+    .filter-group-search input[type="text"] { width: 100%; box-sizing: border-box; }
+    .sev-dropdown { position: relative; }
+    .sev-btn {
+      background: var(--vscode-input-background);
+      color: var(--vscode-input-foreground);
+      border: 1px solid var(--vscode-input-border, rgba(128,128,128,0.35));
+      padding: 3px 6px;
+      font-size: 12px;
+      font-family: inherit;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
     }
+    .sev-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 2px);
+      left: 0;
+      z-index: 200;
+      background: var(--vscode-dropdown-background, var(--vscode-input-background));
+      border: 1px solid var(--vscode-input-border, rgba(128,128,128,0.35));
+      border-radius: 4px;
+      padding: 4px 0;
+      min-width: 140px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .sev-menu.open { display: block; }
+    .sev-menu label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--vscode-input-foreground);
+      white-space: nowrap;
+      user-select: none;
+    }
+    .sev-menu label:hover { background: var(--vscode-list-hoverBackground); }
 
     .results-info {
       padding: 6px 16px;
@@ -676,25 +712,27 @@ export class ResultsPanel implements vscode.Disposable {
 
   <div class="filters">
     <div class="filter-group">
-      <label>Severity:</label>
-      <div class="checkbox-group">
-        <label><input type="checkbox" id="sev-error" checked> <span class="dot dot-error"></span>Error</label>
-        <label><input type="checkbox" id="sev-warning" checked> <span class="dot dot-warning"></span>Warning</label>
-        <label><input type="checkbox" id="sev-info" checked> <span class="dot dot-info"></span>Info</label>
+      <div class="sev-dropdown" id="sev-dropdown">
+        <button class="sev-btn" id="sev-btn" type="button">
+          <span id="sev-btn-label">All Severities</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>
+        </button>
+        <div class="sev-menu" id="sev-menu">
+          <label><input type="checkbox" id="sev-error" checked><span class="dot dot-error"></span>Error</label>
+          <label><input type="checkbox" id="sev-warning" checked><span class="dot dot-warning"></span>Warning</label>
+          <label><input type="checkbox" id="sev-info" checked><span class="dot dot-info"></span>Info</label>
+        </div>
       </div>
     </div>
     <div class="filter-group">
-      <label for="filter-category">Category:</label>
       <select id="filter-category"><option value="all">All Categories</option></select>
     </div>
     <div class="filter-group">
-      <label for="filter-file">File:</label>
       <select id="filter-file"><option value="all">All Files</option></select>
     </div>
     <div class="filter-group">
-      <label for="filter-fixstatus">Status:</label>
       <select id="filter-fixstatus">
-        <option value="all">All</option>
+        <option value="all">All Statuses</option>
         <option value="pending">Pending</option>
         <option value="fixed">Fixed</option>
         <option value="verified">Verified</option>
@@ -702,8 +740,7 @@ export class ResultsPanel implements vscode.Disposable {
         <option value="fix-failed">Fix Failed</option>
       </select>
     </div>
-    <div class="filter-group">
-      <label for="filter-search">Search:</label>
+    <div class="filter-group filter-group-search">
       <input type="text" id="filter-search" placeholder="Filter by message, code, file...">
     </div>
   </div>
@@ -750,6 +787,9 @@ export class ResultsPanel implements vscode.Disposable {
   const sevError = document.getElementById('sev-error');
   const sevWarning = document.getElementById('sev-warning');
   const sevInfo = document.getElementById('sev-info');
+  const sevBtn = document.getElementById('sev-btn');
+  const sevBtnLabel = document.getElementById('sev-btn-label');
+  const sevMenu = document.getElementById('sev-menu');
   const categorySelect = document.getElementById('filter-category');
   const fileSelect = document.getElementById('filter-file');
   const fixStatusSelect = document.getElementById('filter-fixstatus');
@@ -759,10 +799,22 @@ export class ResultsPanel implements vscode.Disposable {
   const summaryEl = document.getElementById('summary');
   const emptyState = document.getElementById('empty-state');
 
+  function updateSevBtn() {
+    const on = [];
+    if (sevError.checked) on.push('Error');
+    if (sevWarning.checked) on.push('Warning');
+    if (sevInfo.checked) on.push('Info');
+    sevBtnLabel.textContent = on.length === 3 ? 'All Severities' : on.length === 0 ? 'Severity' : on.join(', ');
+  }
+
+  sevBtn.addEventListener('click', e => { e.stopPropagation(); sevMenu.classList.toggle('open'); });
+  document.addEventListener('click', () => sevMenu.classList.remove('open'));
+  sevMenu.addEventListener('click', e => e.stopPropagation());
+
   // Event listeners for filters
-  sevError.addEventListener('change', applyFilters);
-  sevWarning.addEventListener('change', applyFilters);
-  sevInfo.addEventListener('change', applyFilters);
+  sevError.addEventListener('change', () => { updateSevBtn(); applyFilters(); });
+  sevWarning.addEventListener('change', () => { updateSevBtn(); applyFilters(); });
+  sevInfo.addEventListener('change', () => { updateSevBtn(); applyFilters(); });
   categorySelect.addEventListener('change', applyFilters);
   fileSelect.addEventListener('change', applyFilters);
   fixStatusSelect.addEventListener('change', applyFilters);

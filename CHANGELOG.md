@@ -4,6 +4,12 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [9.0.6] - 2026-03-20
+
+### Changed
+
+- Redesign Results panel filter bar: collapse severity checkboxes into a single multi-select dropdown ("All Severities" / partial list), remove external labels from Category/File/Status/Search controls (first option or placeholder serves as label), move search to the same row, and apply a consistent subtle border with 4px rounded corners to all filter controls
+
 ## [9.0.5] - 2026-03-20
 
 ### Changed
