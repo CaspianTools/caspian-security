@@ -4,6 +4,12 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [9.0.5] - 2026-03-20
+
+### Changed
+
+- Switch Run toolbar icon from filled (`play-fill`) to outlined (`play`) Phosphor SVG, matching the visual weight of Copy and Export icons
+
 ## [9.0.4] - 2026-03-20
 
 ### Changed
