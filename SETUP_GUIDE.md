@@ -84,7 +84,7 @@ Create a test file with insecure code:
 
 ```javascript
 // test.js
-const password = "admin123";                                    // CRED001
+const password = "EXAMPLE_PASSWORD";                                    // CRED001
 const query = "SELECT * FROM users WHERE id = " + userId;      // DB001
 eval(userCode);                                                 // FE001
 ```

@@ -133,7 +133,7 @@ describe('Rule Pattern Matching', () => {
     const rule = getRuleByCode('CRED001')!;
 
     test('matches hardcoded password assignment', () => {
-      const line = `const password = "admin123";`;
+      const line = `const password = "EXAMPLE_PASSWORD";`;
       expect(matchesAnyPattern(rule, line)).toBe(true);
     });
 

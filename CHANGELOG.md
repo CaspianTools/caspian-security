@@ -4,6 +4,12 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [9.0.2] - 2026-03-19
+
+### Fixed
+
+- Replace `"admin123"` example password with `"EXAMPLE_PASSWORD"` across all documentation, source comments, and test fixtures to resolve Open VSX secret-scanner false positive blocking extension publication
+
 ## [9.0.1] - 2026-03-12
 
 ### Changed
@@ -301,7 +307,7 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 - **Smart Context AI Fixes** -- AI fix prompts now include the entire enclosing function scope and traced variable definitions, extracted via VS Code's DocumentSymbolProvider. The AI sees the full function body instead of just 20 surrounding lines, producing significantly more accurate fixes for complex code.
 - **Confidence Scoring (Deep Verify)** -- each detected issue now receives a confidence classification based on lightweight variable-source analysis:
-  - **Critical** (red badge) -- hardcoded secret detected as a string literal (e.g., `password = "admin123"`)
+  - **Critical** (red badge) -- hardcoded secret detected as a string literal (e.g., `password = "EXAMPLE_PASSWORD"`)
   - **Safe** (green badge) -- static string with no dynamic components (e.g., `query = "SELECT * FROM users"`)
   - **Verify Needed** (orange badge) -- dynamic value via concatenation or template interpolation (e.g., `query = "SELECT * FROM " + input`)
   - Confidence badges appear in the results panel next to the Verify button and in VS Code diagnostics

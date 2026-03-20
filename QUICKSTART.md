@@ -23,7 +23,7 @@ code .
 1. **Create a test file** (`test.js`):
 ```javascript
 // These will trigger security warnings
-const password = "admin123";         // CRED001: Hardcoded credential
+const password = "EXAMPLE_PASSWORD";         // CRED001: Hardcoded credential
 const apiKey = "sk_live_secret";     // CRED001: Hardcoded secret
 
 function getUser(id) {

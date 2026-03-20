@@ -175,7 +175,7 @@ Each detected issue is analyzed for a **confidence level** based on lightweight 
 
 | Level | Badge | Meaning | Example |
 |-------|-------|---------|---------|
-| Critical | Red | Hardcoded secret as a string literal | `const password = "admin123"` |
+| Critical | Red | Hardcoded secret as a string literal | `const password = "EXAMPLE_PASSWORD"` |
 | Safe | Green | Static string with no dynamic input | `const query = "SELECT * FROM users"` |
 | Verify Needed | Orange | Dynamic value via concatenation or interpolation | `const query = "SELECT * FROM " + userInput` |
 

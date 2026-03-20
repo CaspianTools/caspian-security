@@ -43,7 +43,7 @@ code .
 ### Step 3: Test It
 Create a file with insecure code:
 ```javascript
-const password = "admin123";         // CRED001: Hardcoded credential
+const password = "EXAMPLE_PASSWORD";         // CRED001: Hardcoded credential
 const query = "SELECT * FROM users WHERE id = " + id;  // DB001: SQL injection
 eval(userCode);                       // FE001: Unsafe eval
 ```

@@ -222,7 +222,7 @@ export class FixPatternMemory implements vscode.Disposable {
  * Normalize a code line by replacing user-specific identifiers and string
  * literals with placeholders, while preserving structural tokens.
  *
- * Example: `const password = "admin123"` → `const $VAR1 = $STRING`
+ * Example: `const password = "EXAMPLE_PASSWORD"` → `const $VAR1 = $STRING`
  */
 function normalizeLine(line: string): string {
   let result = line.trim();

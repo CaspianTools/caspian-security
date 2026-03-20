@@ -56,7 +56,7 @@ node out/cli/checkUpdates.js /path/to/project
 
 Open a file with a supported language and type insecure code:
 ```javascript
-const password = "admin123";  // CRED001: Hardcoded credential
+const password = "EXAMPLE_PASSWORD";  // CRED001: Hardcoded credential
 ```
 
 You should see security warnings with confidence badges in the Problems panel (`Ctrl+Shift+M`).
