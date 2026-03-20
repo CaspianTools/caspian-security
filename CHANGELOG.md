@@ -4,6 +4,13 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [9.0.7] - 2026-03-20
+
+### Changed
+
+- Convert AI Settings button from primary (blue) labeled button to an icon-only gear button, moved to the far right of the toolbar
+- Add Security Tasks icon button (checklist icon) to the Results panel toolbar for quick access to the task dashboard
+
 ## [9.0.6] - 2026-03-20
 
 ### Changed
