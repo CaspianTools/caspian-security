@@ -4,6 +4,12 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [9.0.8] - 2026-03-20
+
+### Changed
+
+- Add "Tasks" text label to the Tasks toolbar button
+
 ## [9.0.7] - 2026-03-20
 
 ### Changed
