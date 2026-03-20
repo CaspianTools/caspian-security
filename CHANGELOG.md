@@ -4,6 +4,12 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [9.0.3] - 2026-03-20
+
+### Changed
+
+- Consolidate toolbar buttons into three dropdown menus: **Run** (Run Security Check, Check Current File, Check Entire Workspace, Scan Uncommitted Files), **Copy** (Copy All, Copy Errors, Copy Warnings, Copy Info), and **Export** (Export CSV, Export JSON, Export SARIF) — each with icon and chevron
+
 ## [9.0.2] - 2026-03-19
 
 ### Fixed

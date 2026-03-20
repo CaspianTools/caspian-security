@@ -223,6 +223,31 @@ export class ResultsPanel implements vscode.Disposable {
         await vscode.commands.executeCommand('caspian-security.explainRule', message.ruleCode);
         break;
       }
+      case 'runCommand': {
+        await vscode.commands.executeCommand(message.commandId);
+        break;
+      }
+      case 'copyBySeverity': {
+        const targetSeverity: number = message.severity;
+        const labelMap: Record<number, string> = { 0: 'Info', 1: 'Warning', 2: 'Error' };
+        const label = labelMap[targetSeverity] ?? 'Unknown';
+        const lines: string[] = [];
+        lines.push(`Caspian Security \u2014 ${label}s`);
+        lines.push('='.repeat(50));
+        for (const result of this.resultsStore.getAllResults()) {
+          const filtered = result.issues.filter(i => (i.severity as number) === targetSeverity);
+          if (filtered.length === 0) { continue; }
+          lines.push(`--- ${result.relativePath} (${filtered.length} issue(s)) ---`);
+          for (const issue of filtered) {
+            lines.push(`  [${label}] ${issue.code} (Line ${issue.line + 1}): ${issue.message}`);
+            lines.push(`    Suggestion: ${issue.suggestion}`);
+          }
+          lines.push('');
+        }
+        await vscode.env.clipboard.writeText(lines.join('\n'));
+        vscode.window.showInformationMessage(`Caspian Security: ${label}s copied to clipboard`);
+        break;
+      }
     }
   }
 
@@ -278,6 +303,44 @@ export class ResultsPanel implements vscode.Disposable {
       color: var(--vscode-button-secondaryForeground);
     }
     .btn-secondary:hover { background: var(--vscode-button-secondaryHoverBackground); }
+
+    .dropdown { position: relative; display: inline-block; }
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      z-index: 100;
+      min-width: 180px;
+      background: var(--vscode-menu-background, var(--vscode-editor-background));
+      border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+      border-radius: 2px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      margin-top: 2px;
+    }
+    .dropdown-menu.open { display: block; }
+    .dropdown-item {
+      display: block;
+      width: 100%;
+      padding: 6px 12px;
+      background: none;
+      border: none;
+      color: var(--vscode-menu-foreground, var(--vscode-editor-foreground));
+      font-size: 12px;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .dropdown-item:hover {
+      background: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground));
+      color: var(--vscode-menu-selectionForeground, var(--vscode-editor-foreground));
+    }
+    .dropdown-separator {
+      height: 1px;
+      background: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
+      margin: 4px 0;
+    }
 
     .summary {
       padding: 10px 16px;
@@ -568,10 +631,34 @@ export class ResultsPanel implements vscode.Disposable {
     <div class="header-actions">
       <button class="btn" id="btn-ai-settings" title="Configure AI provider">AI Settings</button>
       <button class="btn btn-verify-all" id="btn-verify-all" title="Verify all fixed issues" style="display:none;">Verify All Fixes</button>
-      <button class="btn btn-secondary" id="btn-copy" title="Copy all results to clipboard">Copy All</button>
-      <button class="btn btn-secondary" id="btn-csv" title="Export results as CSV">Export CSV</button>
-      <button class="btn btn-secondary" id="btn-json" title="Export results as JSON">Export JSON</button>
-      <button class="btn btn-secondary" id="btn-sarif" title="Export SARIF for GitHub Security">Export SARIF</button>
+      <div class="dropdown" id="dropdown-run">
+        <button class="btn btn-secondary" id="btn-run" title="Run security scan">&#9654; Run &#9660;</button>
+        <div class="dropdown-menu" id="menu-run">
+          <button class="dropdown-item" id="run-check">Run Security Check</button>
+          <button class="dropdown-item" id="run-check-file">Check Current File</button>
+          <button class="dropdown-item" id="run-check-workspace">Check Entire Workspace</button>
+          <div class="dropdown-separator"></div>
+          <button class="dropdown-item" id="run-uncommitted">Scan Uncommitted Files</button>
+        </div>
+      </div>
+      <div class="dropdown" id="dropdown-copy">
+        <button class="btn btn-secondary" id="btn-copy-menu" title="Copy results to clipboard">&#9113; Copy &#9660;</button>
+        <div class="dropdown-menu" id="menu-copy">
+          <button class="dropdown-item" id="copy-all">Copy All</button>
+          <div class="dropdown-separator"></div>
+          <button class="dropdown-item" id="copy-errors">Copy Errors</button>
+          <button class="dropdown-item" id="copy-warnings">Copy Warnings</button>
+          <button class="dropdown-item" id="copy-info">Copy Info</button>
+        </div>
+      </div>
+      <div class="dropdown" id="dropdown-export">
+        <button class="btn btn-secondary" id="btn-export" title="Export results">&#8659; Export &#9660;</button>
+        <div class="dropdown-menu" id="menu-export">
+          <button class="dropdown-item" id="export-csv">Export CSV</button>
+          <button class="dropdown-item" id="export-json">Export JSON</button>
+          <button class="dropdown-item" id="export-sarif">Export SARIF (GitHub)</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -698,21 +785,42 @@ export class ResultsPanel implements vscode.Disposable {
   document.getElementById('btn-ai-settings').addEventListener('click', () => {
     vscode.postMessage({ type: 'openAISettings' });
   });
-  document.getElementById('btn-copy').addEventListener('click', () => {
-    vscode.postMessage({ type: 'copyToClipboard' });
-  });
-  document.getElementById('btn-csv').addEventListener('click', () => {
-    vscode.postMessage({ type: 'exportCSV' });
-  });
-  document.getElementById('btn-json').addEventListener('click', () => {
-    vscode.postMessage({ type: 'exportJSON' });
-  });
-  document.getElementById('btn-sarif').addEventListener('click', () => {
-    vscode.postMessage({ type: 'exportSARIF' });
-  });
   document.getElementById('btn-verify-all').addEventListener('click', () => {
     vscode.postMessage({ type: 'verifyAllFixes' });
   });
+
+  // Dropdown toggle logic
+  function toggleDropdown(menuId) {
+    document.querySelectorAll('.dropdown-menu').forEach(m => {
+      if (m.id !== menuId) { m.classList.remove('open'); }
+    });
+    document.getElementById(menuId).classList.toggle('open');
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.dropdown')) {
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('open'));
+    }
+  });
+  document.getElementById('btn-run').addEventListener('click', e => { e.stopPropagation(); toggleDropdown('menu-run'); });
+  document.getElementById('btn-copy-menu').addEventListener('click', e => { e.stopPropagation(); toggleDropdown('menu-copy'); });
+  document.getElementById('btn-export').addEventListener('click', e => { e.stopPropagation(); toggleDropdown('menu-export'); });
+
+  // Run items
+  document.getElementById('run-check').addEventListener('click', () => { document.getElementById('menu-run').classList.remove('open'); vscode.postMessage({ type: 'runCommand', commandId: 'caspian-security.runCheck' }); });
+  document.getElementById('run-check-file').addEventListener('click', () => { document.getElementById('menu-run').classList.remove('open'); vscode.postMessage({ type: 'runCommand', commandId: 'caspian-security.runCheckFile' }); });
+  document.getElementById('run-check-workspace').addEventListener('click', () => { document.getElementById('menu-run').classList.remove('open'); vscode.postMessage({ type: 'runCommand', commandId: 'caspian-security.runCheckWorkspace' }); });
+  document.getElementById('run-uncommitted').addEventListener('click', () => { document.getElementById('menu-run').classList.remove('open'); vscode.postMessage({ type: 'runCommand', commandId: 'caspian-security.runCheckUncommitted' }); });
+
+  // Copy items
+  document.getElementById('copy-all').addEventListener('click', () => { document.getElementById('menu-copy').classList.remove('open'); vscode.postMessage({ type: 'copyToClipboard' }); });
+  document.getElementById('copy-errors').addEventListener('click', () => { document.getElementById('menu-copy').classList.remove('open'); vscode.postMessage({ type: 'copyBySeverity', severity: 2 }); });
+  document.getElementById('copy-warnings').addEventListener('click', () => { document.getElementById('menu-copy').classList.remove('open'); vscode.postMessage({ type: 'copyBySeverity', severity: 1 }); });
+  document.getElementById('copy-info').addEventListener('click', () => { document.getElementById('menu-copy').classList.remove('open'); vscode.postMessage({ type: 'copyBySeverity', severity: 0 }); });
+
+  // Export items
+  document.getElementById('export-csv').addEventListener('click', () => { document.getElementById('menu-export').classList.remove('open'); vscode.postMessage({ type: 'exportCSV' }); });
+  document.getElementById('export-json').addEventListener('click', () => { document.getElementById('menu-export').classList.remove('open'); vscode.postMessage({ type: 'exportJSON' }); });
+  document.getElementById('export-sarif').addEventListener('click', () => { document.getElementById('menu-export').classList.remove('open'); vscode.postMessage({ type: 'exportSARIF' }); });
 
   // Advisories toggle
   let advisoriesExpanded = true;
