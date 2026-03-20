@@ -298,6 +298,7 @@ export class ResultsPanel implements vscode.Disposable {
       border-radius: 2px;
     }
     .btn:hover { background: var(--vscode-button-hoverBackground); }
+    .btn svg { vertical-align: middle; fill: currentColor; }
     .btn-secondary {
       background: var(--vscode-button-secondaryBackground);
       color: var(--vscode-button-secondaryForeground);
@@ -632,7 +633,7 @@ export class ResultsPanel implements vscode.Disposable {
       <button class="btn" id="btn-ai-settings" title="Configure AI provider">AI Settings</button>
       <button class="btn btn-verify-all" id="btn-verify-all" title="Verify all fixed issues" style="display:none;">Verify All Fixes</button>
       <div class="dropdown" id="dropdown-run">
-        <button class="btn btn-secondary" id="btn-run" title="Run security scan">&#9654; Run &#9660;</button>
+        <button class="btn btn-secondary" id="btn-run" title="Run security scan"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 256 256"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"/></svg> Run <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
         <div class="dropdown-menu" id="menu-run">
           <button class="dropdown-item" id="run-check">Run Security Check</button>
           <button class="dropdown-item" id="run-check-file">Check Current File</button>
@@ -642,7 +643,7 @@ export class ResultsPanel implements vscode.Disposable {
         </div>
       </div>
       <div class="dropdown" id="dropdown-copy">
-        <button class="btn btn-secondary" id="btn-copy-menu" title="Copy results to clipboard">&#9113; Copy &#9660;</button>
+        <button class="btn btn-secondary" id="btn-copy-menu" title="Copy results to clipboard"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 256 256"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32Zm-56,176H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg> Copy <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
         <div class="dropdown-menu" id="menu-copy">
           <button class="dropdown-item" id="copy-all">Copy All</button>
           <div class="dropdown-separator"></div>
@@ -652,7 +653,7 @@ export class ResultsPanel implements vscode.Disposable {
         </div>
       </div>
       <div class="dropdown" id="dropdown-export">
-        <button class="btn btn-secondary" id="btn-export" title="Export results">&#8659; Export &#9660;</button>
+        <button class="btn btn-secondary" id="btn-export" title="Export results"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 256 256"><path d="M224,152v56a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V152a8,8,0,0,1,16,0v56H208V152a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,132.69V40a8,8,0,0,0-16,0v92.69L93.66,106.34a8,8,0,0,0-11.32,11.32Z"/></svg> Export <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
         <div class="dropdown-menu" id="menu-export">
           <button class="dropdown-item" id="export-csv">Export CSV</button>
           <button class="dropdown-item" id="export-json">Export JSON</button>

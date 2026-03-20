@@ -4,6 +4,12 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [9.0.4] - 2026-03-20
+
+### Changed
+
+- Replace Unicode icon characters on Run, Copy, and Export toolbar dropdown buttons with Phosphor SVG icons (`play`, `copy`, `download-simple`, `caret-down`), inlined directly to respect webview CSP
+
 ## [9.0.3] - 2026-03-20
 
 ### Changed
