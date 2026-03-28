@@ -130,6 +130,7 @@ All settings are under the `caspianSecurity.*` namespace.
 | `showInformational` | boolean | `true` | Show informational/best-practice reminders alongside security findings |
 | `reduceInternalPathSeverity` | boolean | `true` | Downgrade severity for files in admin, scripts, seed, internal directories |
 | `includeDependencyCheck` | boolean | `true` | Include dependency checking in workspace scans |
+| `autoVerify` | boolean | `true` | Automatically verify findings as resolved when they disappear from scan results |
 
 ### AI Settings
 

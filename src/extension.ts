@@ -33,6 +33,7 @@ import { registerTaskCommands } from './taskCommands';
 import { TaskDetailPanel } from './taskDetailPanel';
 import { WelcomePanel } from './welcomePanel';
 import { SecurityScoreService } from './securityScore';
+import { AutoVerifier } from './autoVerifier';
 
 const BATCH_SIZE = 50;
 
@@ -246,6 +247,18 @@ export function activate(context: vscode.ExtensionContext) {
         configManager.get<boolean>('enableTaskManagement', true));
 
       taskManager.startScheduler();
+
+      // Initialize auto-verification of resolved findings
+      const autoVerifier = new AutoVerifier(
+        resultsStore, fixTracker,
+        async () => { await runDependencyCheck(true); },
+        ruleIntelligence
+      );
+      const avRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      if (avRoot) {
+        autoVerifier.registerDependencyWatchers(avRoot);
+      }
+      context.subscriptions.push(autoVerifier);
     }).catch(error => {
       console.error('Caspian Security: Failed to load persistence stores:', error);
     });
@@ -1675,58 +1688,73 @@ async function runUncommittedCheck() {
   resultsPanel.show();
 }
 
-async function runDependencyCheck(): Promise<DependencyCheckResult | undefined> {
-  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  if (!workspaceRoot) {
-    vscode.window.showWarningMessage('Caspian Security: No workspace folder open');
-    return undefined;
-  }
+let depCheckInProgress = false;
 
-  const fs = await import('fs');
-  const packageJsonPath = path.join(workspaceRoot, 'package.json');
-  if (!fs.existsSync(packageJsonPath)) {
-    vscode.window.showWarningMessage('Caspian Security: No package.json found in workspace root');
-    return undefined;
-  }
+async function runDependencyCheck(quiet = false): Promise<DependencyCheckResult | undefined> {
+  if (depCheckInProgress) { return undefined; }
+  depCheckInProgress = true;
 
-  let result: DependencyCheckResult | undefined;
+  try {
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!workspaceRoot) {
+      if (!quiet) { vscode.window.showWarningMessage('Caspian Security: No workspace folder open'); }
+      return undefined;
+    }
 
-  await vscode.window.withProgress(
-    {
-      location: vscode.ProgressLocation.Notification,
-      title: 'Caspian Security: Checking dependency updates...',
-      cancellable: false,
-    },
-    async () => {
+    const fs = await import('fs');
+    const packageJsonPath = path.join(workspaceRoot, 'package.json');
+    if (!fs.existsSync(packageJsonPath)) {
+      if (!quiet) { vscode.window.showWarningMessage('Caspian Security: No package.json found in workspace root'); }
+      return undefined;
+    }
+
+    let result: DependencyCheckResult | undefined;
+
+    if (quiet) {
       result = await checkDependencies(workspaceRoot);
+    } else {
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Caspian Security: Checking dependency updates...',
+          cancellable: false,
+        },
+        async () => {
+          result = await checkDependencies(workspaceRoot);
+        }
+      );
     }
-  );
 
-  if (result) {
-    const output = formatResultsAsText(result);
-    dependencyOutputChannel.clear();
-    dependencyOutputChannel.appendLine('Caspian Security: Dependency & Stack Update Check');
-    dependencyOutputChannel.appendLine(`Project: ${workspaceRoot}`);
-    dependencyOutputChannel.appendLine('='.repeat(50));
-    dependencyOutputChannel.appendLine('');
-    dependencyOutputChannel.appendLine(output);
-    dependencyOutputChannel.show(true);
+    if (result) {
+      if (!quiet) {
+        const output = formatResultsAsText(result);
+        dependencyOutputChannel.clear();
+        dependencyOutputChannel.appendLine('Caspian Security: Dependency & Stack Update Check');
+        dependencyOutputChannel.appendLine(`Project: ${workspaceRoot}`);
+        dependencyOutputChannel.appendLine('='.repeat(50));
+        dependencyOutputChannel.appendLine('');
+        dependencyOutputChannel.appendLine(output);
+        dependencyOutputChannel.show(true);
 
-    const outdatedCount = result.outdatedPackages.length;
-    const vulnCount = result.auditSummary.totalVulnerabilities;
-    vscode.window.showInformationMessage(
-      `Caspian Security: ${outdatedCount} outdated package(s), ${vulnCount} vulnerability(ies) found. See Output panel.`
-    );
+        const outdatedCount = result.outdatedPackages.length;
+        const vulnCount = result.auditSummary.totalVulnerabilities;
+        vscode.window.showInformationMessage(
+          `Caspian Security: ${outdatedCount} outdated package(s), ${vulnCount} vulnerability(ies) found. See Output panel.`
+        );
+      }
 
-    storeDependencyResultsAsIssues(result, workspaceRoot);
+      storeDependencyResultsAsIssues(result, workspaceRoot);
 
-    // Auto-complete related security tasks
-    if (taskManager) {
-      taskManager.onDependencyCheckCompleted();
+      // Auto-complete related security tasks
+      if (taskManager) {
+        taskManager.onDependencyCheckCompleted();
+      }
     }
+
+    return result;
+  } finally {
+    depCheckInProgress = false;
   }
-
-  return result;
 }
 
 function storeDependencyResultsAsIssues(result: DependencyCheckResult, workspaceRoot: string): void {

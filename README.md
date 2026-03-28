@@ -26,6 +26,7 @@ What sets it apart: **context-aware intelligence**. The scanner classifies detec
 - **3 AI providers** -- Anthropic Claude, OpenAI GPT-4, and Google Gemini for fix generation
 - **Cancellable scans** -- workspace scans show progress and can be cancelled mid-run
 - **Configurable severity** -- filter diagnostics by error, warning, or info thresholds
+- **Auto-verification** -- resolved findings are automatically verified when re-scans confirm the issue is gone; dependency findings re-check automatically when `package.json` or `package-lock.json` changes
 - **False positive controls** -- context-aware rules, generated file detection, masking function detection, internal-path severity reduction, pagination-aware rules, and a toggle to hide informational reminders
 - **Performance safeguards** -- automatic skipping of minified/generated files, configurable file size limit, per-file analysis timeout, and line length guards to prevent high CPU on large codebases
 - **Learning Intelligence** -- the extension learns from every scan, fix, ignore, and false positive to improve accuracy over time: adaptive confidence scoring, fix pattern memory for instant replays, codebase-specific safe pattern learning, regression detection, and actionable insights

@@ -133,6 +133,10 @@ export class ConfigManager {
     });
   }
 
+  getAutoVerify(): boolean {
+    return this.config.get('autoVerify', true);
+  }
+
   getDependencyCheckEnabled(): boolean {
     return this.config.get('includeDependencyCheck', true);
   }

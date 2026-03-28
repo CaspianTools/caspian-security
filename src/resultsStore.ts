@@ -26,12 +26,21 @@ export class ResultsStore implements vscode.Disposable {
   private _onDidChange = new vscode.EventEmitter<void>();
   readonly onDidChange = this._onDidChange.event;
 
+  private _onWillUpdateFile = new vscode.EventEmitter<{
+    uriString: string;
+    oldResult: FileSecurityResult | undefined;
+    newResult: FileSecurityResult;
+  }>();
+  readonly onWillUpdateFile = this._onWillUpdateFile.event;
+
   private _scanDuration = 0;
   private _scanType = '';
   private _debounceTimer: ReturnType<typeof setTimeout> | undefined;
   private _projectAdvisories: ProjectAdvisory[] = [];
 
   setFileResults(uriString: string, result: FileSecurityResult): void {
+    const oldResult = this.results.get(uriString);
+    this._onWillUpdateFile.fire({ uriString, oldResult, newResult: result });
     this.results.set(uriString, result);
     this._debouncedFire();
   }
@@ -304,6 +313,7 @@ export class ResultsStore implements vscode.Disposable {
   dispose(): void {
     if (this._debounceTimer) { clearTimeout(this._debounceTimer); }
     this._onDidChange.dispose();
+    this._onWillUpdateFile.dispose();
     this.results.clear();
   }
 }

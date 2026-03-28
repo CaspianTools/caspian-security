@@ -4,6 +4,17 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [9.1.0] - 2026-03-28
+
+### Added
+
+- Auto-verification of resolved findings — the system now watches scan results and automatically marks findings as verified when they disappear, eliminating the need to click Verify manually
+- File system watchers for `package.json` and `package-lock.json` — dependency findings (DEP-OUTDATED, DEP-AUDIT) are automatically re-checked when packages change
+- New `caspianSecurity.autoVerify` setting (default: true) to toggle auto-verification
+- Quiet mode for background dependency re-checks triggered by file watchers
+- Line-drift guard prevents false auto-verification when code findings shift lines
+- Concurrency guard prevents overlapping dependency checks
+
 ## [9.0.8] - 2026-03-20
 
 ### Changed

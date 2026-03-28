@@ -194,8 +194,16 @@ interface SecurityRule {
 - Persists across VS Code restarts via workspaceState
 - Summary statistics for progress bar display
 
+### autoVerifier.ts
+- Subscribes to ResultsStore.onWillUpdateFile to detect resolved findings
+- Compares old vs new scan results and auto-marks resolved findings as verified
+- Watches package.json and package-lock.json for changes, triggering quiet background dependency re-checks
+- Line-drift guard prevents false verification when code findings shift lines
+- Configurable via `caspianSecurity.autoVerify` setting
+
 ### resultsStore.ts
 - Stores scan results per file with issues, language, and timestamps
+- Fires onWillUpdateFile event before overwriting results (used by AutoVerifier)
 - JSON, CSV, and SARIF v2.1.0 export
 - Project advisory storage
 - Scan metadata (duration, scan type)
