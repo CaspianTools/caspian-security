@@ -7,6 +7,7 @@ import {
   INTERVAL_LABELS,
 } from './taskTypes';
 import { CATEGORY_LABELS, SecurityCategory } from './types';
+import { isAllowedWebviewCommand } from './webviewUtils';
 
 export class TaskDetailPanel implements vscode.Disposable {
   private panel: vscode.WebviewPanel | undefined;
@@ -35,7 +36,11 @@ export class TaskDetailPanel implements vscode.Disposable {
       'caspianTaskDetail',
       'Task Detail',
       vscode.ViewColumn.Two,
-      { enableScripts: true, retainContextWhenHidden: true },
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [this.extensionUri],
+      },
     );
 
     this.panel.onDidDispose(() => {
@@ -160,7 +165,7 @@ export class TaskDetailPanel implements vscode.Disposable {
         break;
 
       case 'runCheck': {
-        if (msg.runCommand) {
+        if (isAllowedWebviewCommand(msg.runCommand)) {
           vscode.commands.executeCommand(msg.runCommand);
         }
         break;

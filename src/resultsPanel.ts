@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import { ResultsStore } from './resultsStore';
 import { SecuritySeverity, SecurityCategory, CATEGORY_LABELS, SEVERITY_LABELS } from './types';
 import { FixTracker } from './fixTracker';
+import { isAllowedWebviewCommand } from './webviewUtils';
 
 interface SerializedIssue {
   filePath: string;
@@ -57,6 +58,7 @@ export class ResultsPanel implements vscode.Disposable {
       {
         enableScripts: true,
         retainContextWhenHidden: true,
+        localResourceRoots: [this.extensionUri],
       }
     );
 
@@ -224,7 +226,9 @@ export class ResultsPanel implements vscode.Disposable {
         break;
       }
       case 'runCommand': {
-        await vscode.commands.executeCommand(message.commandId);
+        if (isAllowedWebviewCommand(message.commandId)) {
+          await vscode.commands.executeCommand(message.commandId);
+        }
         break;
       }
       case 'copyBySeverity': {

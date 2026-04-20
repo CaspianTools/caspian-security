@@ -44,7 +44,13 @@ export class FileStateTracker implements vscode.Disposable {
       STORE_FILE,
       { version: 1, files: {} }
     );
-    this.states = new Map(Object.entries(store.files));
+    // Cached issues are intentionally NOT restored: persisting them risked
+    // leaking matched text (e.g. hardcoded secrets) across sessions. The
+    // change-detection cache (hash/mtime/size) is the only thing we carry
+    // forward; issues repopulate as each file is scanned this session.
+    this.states = new Map(
+      Object.entries(store.files).map(([k, s]) => [k, { ...s, cachedIssues: [] }])
+    );
   }
 
   async getFileChangeStatus(relativePath: string, fsPath: string): Promise<FileChangeStatus> {
@@ -132,12 +138,25 @@ export class FileStateTracker implements vscode.Disposable {
 
   async save(): Promise<void> {
     if (!this.dirty) { return; }
-    const store: FileStateStore = {
-      version: 1,
-      files: Object.fromEntries(this.states),
-    };
-    await this.persistence.writeStore(STORE_FILE, store);
+    await this.persistence.writeStore(STORE_FILE, this.buildSerialisableStore());
     this.dirty = false;
+  }
+
+  /**
+   * Produce the on-disk representation of the tracker. `cachedIssues` is
+   * deliberately dropped: issues carry `pattern` (the raw matched text
+   * from the user's source, e.g. `password = "hunter2"`) plus positional
+   * metadata. Persisting that verbatim risks leaking matched secrets to
+   * local disk backups / cloud sync of the VS Code data dir. The
+   * change-detection cache (hash/mtime/size) is kept — it is what actually
+   * drives the skip-unchanged-files optimisation.
+   */
+  private buildSerialisableStore(): FileStateStore {
+    const files: Record<string, FileState> = {};
+    for (const [key, state] of this.states) {
+      files[key] = { ...state, cachedIssues: [] };
+    }
+    return { version: 1, files };
   }
 
   private computeHash(fsPath: string): string {
@@ -149,7 +168,7 @@ export class FileStateTracker implements vscode.Disposable {
     this.dirty = true;
     this.persistence.scheduleWrite(
       STORE_FILE,
-      { version: 1, files: Object.fromEntries(this.states) },
+      this.buildSerialisableStore(),
       2000
     );
   }
@@ -158,3 +177,4 @@ export class FileStateTracker implements vscode.Disposable {
     this._onDidChange.dispose();
   }
 }
+

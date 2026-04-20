@@ -1973,6 +1973,40 @@ async function executeAIFixFromPanel(
         .join('\n')
     : undefined;
 
+  // F2 — explicit per-invocation consent + minimal-context default.
+  // The dialog is shown BEFORE any network request so the user can cancel
+  // before any file content leaves the workspace.
+  const caspianConfig = vscode.workspace.getConfiguration('caspianSecurity');
+  const minimalContext = caspianConfig.get<boolean>('aiFixMinimalContext', true);
+  const requireConsent = caspianConfig.get<boolean>('aiFixRequireConsent', true);
+
+  if (requireConsent) {
+    const scopeDescription = minimalContext
+      ? `~${endLine - startLine} lines around the finding (line ${issueData.line + 1})`
+      : 'the ENTIRE file content';
+    const consent = await vscode.window.showInformationMessage(
+      `Send code to ${providerConfig.provider.toUpperCase()} to generate an AI fix?`,
+      {
+        modal: true,
+        detail:
+          `File: ${issueData.relativePath}\n` +
+          `Provider: ${providerConfig.provider} (${providerConfig.model})\n` +
+          `Scope: ${scopeDescription}\n\n` +
+          `You pay the provider directly for API usage. You can change the scope in settings (caspianSecurity.aiFixMinimalContext).`,
+      },
+      'Send & Generate Fix',
+      'Open AI Settings',
+    );
+
+    if (consent === 'Open AI Settings') {
+      await vscode.commands.executeCommand('workbench.action.openSettings', 'caspianSecurity.aiFix');
+      return;
+    }
+    if (consent !== 'Send & Generate Fix') {
+      return; // user cancelled; nothing sent
+    }
+  }
+
   const request: AIFixRequest = {
     filePath: issueData.relativePath,
     languageId: document.languageId,
@@ -1986,9 +2020,14 @@ async function executeAIFixFromPanel(
     issueColumn: issueData.column,
     originalLineText: originalLine,
     surroundingCode,
-    fullFileContent: fullContent,
-    functionScope,
-    variableDefinitions,
+    // In minimal mode we intentionally do NOT send the full file — only the
+    // surroundingCode window. The response is spliced back into the file below.
+    fullFileContent: minimalContext ? '' : fullContent,
+    functionScope: minimalContext ? undefined : functionScope,
+    variableDefinitions: minimalContext ? undefined : variableDefinitions,
+    minimalContext,
+    regionStartLine: minimalContext ? startLine : undefined,
+    regionEndLine: minimalContext ? endLine - 1 : undefined,
   };
 
   await vscode.window.withProgress(
@@ -2000,7 +2039,23 @@ async function executeAIFixFromPanel(
     async () => {
       try {
         const response = await aiFixService.generateFix(providerConfig, request);
-        const applied = await showDiffAndApply(document, fullContent, response);
+
+        // In minimal-context mode the model returns only the fixed region; we
+        // splice it back into the original file here so the rest of the flow
+        // (diff preview, apply) can treat it uniformly as a full-file fix.
+        let effectiveResponse = response;
+        if (minimalContext) {
+          const fixedRegion = response.fixedFileContent.replace(/\r\n/g, '\n');
+          const before = lines.slice(0, startLine).join('\n');
+          const after = lines.slice(endLine).join('\n');
+          const reconstructed =
+            (before ? before + '\n' : '') +
+            fixedRegion +
+            (after ? (fixedRegion.endsWith('\n') ? '' : '\n') + after : '');
+          effectiveResponse = { ...response, fixedFileContent: reconstructed };
+        }
+
+        const applied = await showDiffAndApply(document, fullContent, effectiveResponse);
         if (applied) {
           const key = FixTracker.makeKey(issueData.relativePath, issueData.code, issueData.line, issueData.pattern);
           fixTracker.markFixed(

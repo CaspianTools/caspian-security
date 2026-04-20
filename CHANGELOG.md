@@ -4,6 +4,39 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [9.2.0] - 2026-04-20
+
+Security-hardening release. This version fixes nine self-audit findings affecting the extension's own data-flow, webview, and storage surface. No new scan rules; no functional regressions expected. All changes are defence-in-depth; no known in-the-wild exploitation.
+
+### Security — Critical
+
+- **AI fix provider: Gemini API key moved out of URL path.** Gemini calls now pass the key in the `x-goog-api-key` header instead of the `?key=...` query string, preventing key leakage via proxy logs, CDN edge logs, and `Referer` headers.
+- **AI fix: explicit per-invocation consent.** A modal dialog now appears *before* any code is sent to the provider, showing which file, which provider, and how much code will be transmitted. Cancel is the default. Gated by the new `caspianSecurity.aiFixRequireConsent` setting (default `true`).
+- **AI fix: minimal-context mode, on by default.** New setting `caspianSecurity.aiFixMinimalContext` (default `true`) sends only ~20 lines around the finding to the provider instead of the whole file. Old behaviour — sending `fullFileContent`, `functionScope`, and `variableDefinitions` — is now opt-in. The response is spliced back into the file locally.
+- **Learning Dashboard: CSP + nonce added.** `learningPanel` previously had no Content-Security-Policy and used inline `onclick` handlers with string-concatenated command names. Replaced with a strict CSP (`default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-<nonce>';`), nonce-scoped `<script>`, and event-delegated `data-cmd` attributes validated against an allow-list.
+- **Webview command bridge: allow-list enforced.** `resultsPanel`, `taskDetailPanel`, and `learningPanel` now reject any `runCommand` / `runCheck` message whose command ID isn't in a central allow-list (`src/webviewUtils.ts`). Previously a webview could invoke any registered VS Code command.
+
+### Security — High
+
+- **All webview panels now set `localResourceRoots: [extensionUri]`.** `resultsPanel`, `aiSettingsPanel`, `learningPanel`, `welcomePanel`, `taskDetailPanel`, and the `taskTreeProvider` webview view can no longer request files outside the extension directory via `vscode-webview-resource://` URIs.
+- **Prompt-injection hardening.** `buildFixPrompt` now escapes triple-backtick fences in user-supplied code (`surroundingCode`, `fullFileContent`, `functionScope`, `variableDefinitions`, `originalLineText`) so a file containing ``` in a comment cannot break out of the markdown code block. The system prompt now explicitly flags user sections as untrusted data.
+- **Telemetry: workspace-scoped opt-in.** Previously, clicking "Enable" on the telemetry prompt flipped `enableTelemetry` globally (every workspace, every project). Opt-in now writes to `ConfigurationTarget.Workspace`. The opt-in copy is also more truthful: it explicitly lists the full payload (rule codes, language IDs, AI provider name, session UUID), making clear that `aiProvider` is included.
+- **Telemetry endpoint is now configurable + https-validated.** New `caspianSecurity.telemetryEndpoint` setting. The resolver ignores any value that doesn't start with `https://`, so a malformed or downgraded setting cannot redirect the payload.
+- **Cached issue patterns no longer persisted.** `fileStateTracker.ts` used to serialise the full `cachedIssues` array to `file-state.json`, including `pattern` (the raw matched text from the source — e.g. `password = "hunter2"`). Cached issues are now dropped on save; the change-detection cache (hash / mtime / size) — the only part that actually drives the skip-unchanged optimisation — is kept. On restart, issues repopulate as each file is scanned this session.
+
+### Security — Medium
+
+- **Tightened analyzer timeout budget.** Per-file scan budget reduced from 10s to 3s, deadline polled every 25 lines instead of every 100, and the per-line length cap dropped from 5000 to 2000 characters. Real scans are unaffected; adversarial inputs are bounded sooner.
+- **New `redosGuard` test.** Every `RegExp` on every rule is exercised against a library of catastrophic-backtracking inputs; the build fails if any pattern takes >200 ms.
+
+### Added
+
+- `caspianSecurity.aiFixMinimalContext` (boolean, default `true`)
+- `caspianSecurity.aiFixRequireConsent` (boolean, default `true`)
+- `caspianSecurity.telemetryEndpoint` (string, default `https://telemetry.caspiansecurity.dev/v1/report`)
+- New shared module `src/webviewUtils.ts` exposing `ALLOWED_WEBVIEW_COMMANDS`, `isAllowedWebviewCommand()`, and `getNonce()`
+- New tests: `src/__tests__/redosGuard.test.ts`, `src/__tests__/webviewUtils.test.ts`, `src/__tests__/aiFixPrompt.test.ts`
+
 ## [9.1.1] - 2026-04-20
 
 ### Fixed

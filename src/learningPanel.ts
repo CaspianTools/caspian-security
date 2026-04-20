@@ -4,6 +4,7 @@ import { FixPatternMemory } from './fixPatternMemory';
 import { CodebaseProfile } from './codebaseProfile';
 import { ScanHistoryStore } from './scanHistoryStore';
 import { generateInsights, Insight } from './scanInsights';
+import { getNonce, isAllowedWebviewCommand } from './webviewUtils';
 
 export class LearningPanel implements vscode.Disposable {
   private panel: vscode.WebviewPanel | undefined;
@@ -32,7 +33,11 @@ export class LearningPanel implements vscode.Disposable {
       'caspianLearningDashboard',
       'Caspian Learning Dashboard',
       vscode.ViewColumn.Two,
-      { enableScripts: true, retainContextWhenHidden: true }
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [this.extensionUri],
+      }
     );
 
     this.panel.onDidDispose(() => {
@@ -122,7 +127,7 @@ export class LearningPanel implements vscode.Disposable {
   private handleMessage(msg: any): void {
     switch (msg.command) {
       case 'runAction':
-        if (msg.actionCommand) {
+        if (isAllowedWebviewCommand(msg.actionCommand)) {
           vscode.commands.executeCommand(msg.actionCommand);
         }
         break;
@@ -159,11 +164,13 @@ export class LearningPanel implements vscode.Disposable {
   }
 
   private getHtml(): string {
+    const nonce = getNonce();
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';">
 <title>Caspian Learning Dashboard</title>
 <style>
   body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); padding: 16px; margin: 0; }
@@ -233,12 +240,18 @@ export class LearningPanel implements vscode.Disposable {
 <div id="trend"><div class="empty">Run more scans to see trends.</div></div>
 
 <div class="controls">
-  <button onclick="exportLearning()">Export Learning Data</button>
-  <button class="danger" onclick="resetLearning()">Reset All Learning</button>
+  <button id="btnExport">Export Learning Data</button>
+  <button class="danger" id="btnReset">Reset All Learning</button>
 </div>
 
-<script>
+<script nonce="${nonce}">
 const vscode = acquireVsCodeApi();
+document.getElementById('btnExport').addEventListener('click', exportLearning);
+document.getElementById('btnReset').addEventListener('click', resetLearning);
+document.getElementById('insights').addEventListener('click', function(e){
+  var btn = e.target.closest('button[data-cmd]');
+  if (btn) { runAction(btn.getAttribute('data-cmd')); }
+});
 let currentData = null;
 let sortKey = 'detections';
 let sortAsc = false;
@@ -277,15 +290,21 @@ function renderInsights(insights) {
   const el = document.getElementById('insights');
   if (!insights.length) { el.innerHTML = '<div class="empty">No insights yet. Run some scans and interact with findings.</div>'; return; }
   el.innerHTML = insights.map(i => {
-    let html = '<div class="insight insight-' + i.severity + '">';
+    let html = '<div class="insight insight-' + esc(i.severity) + '">';
     html += '<div class="title">' + esc(i.title) + '</div>';
     html += '<div class="detail">' + esc(i.detail) + '</div>';
     if (i.actionLabel && i.actionCommand) {
-      html += '<button class="action-btn" onclick="runAction(\\''+i.actionCommand+'\\')">'+esc(i.actionLabel)+'</button>';
+      // data-cmd is HTML-escaped via escAttr; the click handler registered
+      // at the top of this script reads it back with getAttribute.
+      html += '<button class="action-btn" data-cmd="' + escAttr(i.actionCommand) + '">' + esc(i.actionLabel) + '</button>';
     }
     html += '</div>';
     return html;
   }).join('');
+}
+
+function escAttr(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function renderRuleTable(rows) {

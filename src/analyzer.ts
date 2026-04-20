@@ -49,18 +49,27 @@ export class SecurityAnalyzer {
       const lines = text.split('\n');
       const informationalFired = new Set<string>();
       const informationalCandidates = new Map<string, SecurityIssue[]>();
-      const deadline = Date.now() + 10000;
+      // Per-file budget: tightened from 10s → 3s. A healthy rule run completes
+      // in <100ms on a large file; a pathological regex against adversarial
+      // input is the only realistic way to approach this limit, so a shorter
+      // budget bounds the ReDoS blast radius without affecting real scans.
+      const deadline = Date.now() + 3000;
 
       for (let lineNum = 0; lineNum < lines.length; lineNum++) {
-        // Per-file timeout: bail out if analysis exceeds 10 seconds
-        if (lineNum % 100 === 0 && lineNum > 0 && Date.now() > deadline) {
+        // Poll the deadline more frequently than before (every 25 lines vs
+        // every 100) so a runaway regex on a single long line cannot push
+        // us far past the budget.
+        if (lineNum % 25 === 0 && lineNum > 0 && Date.now() > deadline) {
           break;
         }
 
         const line = lines[lineNum];
 
-        // Skip extremely long lines (likely minified code)
-        if (line.length > 5000) {
+        // Skip extremely long lines (likely minified code). Dropped from 5000
+        // → 2000 chars to bound per-line regex execution time; generated/
+        // minified files are already excluded elsewhere, so this only kicks
+        // in for true outliers.
+        if (line.length > 2000) {
           continue;
         }
 

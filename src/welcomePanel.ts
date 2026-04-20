@@ -38,7 +38,11 @@ export class WelcomePanel implements vscode.Disposable {
       'caspianWelcome',
       'Welcome to Caspian Security',
       vscode.ViewColumn.One,
-      { enableScripts: true, retainContextWhenHidden: false }
+      {
+        enableScripts: true,
+        retainContextWhenHidden: false,
+        localResourceRoots: [this.extensionUri],
+      }
     );
 
     this.panel.webview.html = this.getHtml();

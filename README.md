@@ -158,15 +158,26 @@ Checks for outdated npm packages, known vulnerabilities (`npm audit`), and stack
 
 ## AI Fix with Smart Context
 
-When you click **AI Fix** on a detected issue, the extension extracts the full enclosing function using VS Code's built-in symbol provider and traces variable definitions referenced in the vulnerable line. The AI receives:
+When you click **AI Fix** on a detected issue, Caspian prompts you with a modal before anything leaves your workspace — it names the file, the provider (Anthropic / OpenAI / Gemini), and exactly how much code will be sent. You cancel or confirm in one click.
 
-1. **The complete function body** -- not just 20 lines, but the entire function scope
-2. **Variable definitions** -- where each relevant variable was declared or assigned
-3. **Security-expert instruction** -- "Fix the issue on line N within the function scope without breaking the surrounding logic"
+### Minimal context is the default
 
-This produces significantly better fixes for issues buried deep inside complex functions. If no symbol provider is available (e.g., plain text files), the extension falls back to the standard 20-line surrounding context.
+By default Caspian sends **only ~20 lines around the finding**, not your whole file. The AI is asked to return just the fixed region; the extension splices it back into the file locally. This keeps secrets, PII, and proprietary logic on the rest of the file from ever leaving your machine.
 
-**Supported AI providers:** Anthropic Claude, OpenAI GPT-4, Google Gemini. Configure via the **AI Settings** button in the results panel.
+### Opt in to full context for harder fixes
+
+If minimal context isn't enough — e.g., the fix needs awareness of code further up the file — flip `caspianSecurity.aiFixMinimalContext` to `false`. In full-context mode the extension sends:
+
+1. **The complete enclosing function** via VS Code's symbol provider
+2. **Variable definitions** traced from the vulnerable line
+3. The full file content
+
+### Settings
+
+- `caspianSecurity.aiFixRequireConsent` — show the per-invocation consent dialog (default `true`).
+- `caspianSecurity.aiFixMinimalContext` — send only the surrounding region instead of the full file (default `true`).
+
+**Supported AI providers:** Anthropic Claude, OpenAI GPT-4, Google Gemini. Configure via the **AI Settings** button in the results panel. Keys are stored in VS Code's OS-backed `SecretStorage`, never in `settings.json`.
 
 ---
 

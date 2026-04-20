@@ -30,9 +30,29 @@ export interface TelemetryPayload {
   fixPatternsReused: number;
 }
 
-const TELEMETRY_ENDPOINT = 'https://telemetry.caspiansecurity.dev/v1/report';
+const DEFAULT_TELEMETRY_ENDPOINT = 'https://telemetry.caspiansecurity.dev/v1/report';
 const SEND_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const FIRST_RUN_KEY = 'caspianSecurity.telemetry.firstRunPromptShown';
+
+/**
+ * Resolve the telemetry endpoint. Always returns an https:// URL — anything
+ * else (http, missing, malformed) falls back to the default so a misconfigured
+ * setting cannot downgrade the transport.
+ */
+function resolveEndpoint(): string {
+  const raw = vscode.workspace
+    .getConfiguration('caspianSecurity')
+    .get<string>('telemetryEndpoint', DEFAULT_TELEMETRY_ENDPOINT);
+  if (typeof raw !== 'string' || !raw.startsWith('https://')) {
+    return DEFAULT_TELEMETRY_ENDPOINT;
+  }
+  try {
+    new URL(raw);
+    return raw;
+  } catch {
+    return DEFAULT_TELEMETRY_ENDPOINT;
+  }
+}
 
 export class TelemetryService implements vscode.Disposable {
   private timer: ReturnType<typeof setInterval> | undefined;
@@ -167,27 +187,43 @@ export class TelemetryService implements vscode.Disposable {
   }
 
   private async showOptInPrompt(): Promise<void> {
+    // Truthful summary of exactly what the payload carries. collectPayload() is
+    // the source of truth — keep this in sync if the payload shape changes.
+    const disclosure =
+      'Sends: rule codes, detection/fix/FP counts, language IDs, AI provider ' +
+      'name, extension version, VS Code version, platform, and a daily-rotated ' +
+      'session UUID. Does NOT send: file content, file paths, identifiers, ' +
+      'or workspace names.';
+
     const choice = await vscode.window.showInformationMessage(
-      'Help improve Caspian Security? Share anonymized rule effectiveness statistics (no code or file data).',
-      'View What\'s Shared',
-      'Enable',
+      'Help improve Caspian Security with anonymous usage stats?',
+      { modal: false, detail: disclosure },
+      'View Exact Payload',
+      'Enable (this workspace)',
       'No Thanks'
     );
 
-    if (choice === 'Enable') {
-      await vscode.workspace.getConfiguration('caspianSecurity').update('enableTelemetry', true, true);
+    if (choice === 'Enable (this workspace)') {
+      // Workspace scope so opting in here does not silently enable telemetry
+      // in every other workspace the user opens.
+      await vscode.workspace
+        .getConfiguration('caspianSecurity')
+        .update('enableTelemetry', true, vscode.ConfigurationTarget.Workspace);
       this.scheduleDaily();
-      vscode.window.showInformationMessage('Telemetry enabled. You can disable it anytime in settings.');
-    } else if (choice === 'View What\'s Shared') {
+      vscode.window.showInformationMessage(
+        'Telemetry enabled for this workspace. Toggle it anytime under Settings → Caspian Security → Enable Telemetry.'
+      );
+    } else if (choice === 'View Exact Payload') {
       await this.showPreview();
-      // Ask again after showing preview
       const followUp = await vscode.window.showInformationMessage(
-        'Enable anonymous telemetry?',
-        'Enable',
+        'Enable anonymous telemetry for this workspace?',
+        'Enable (this workspace)',
         'No Thanks'
       );
-      if (followUp === 'Enable') {
-        await vscode.workspace.getConfiguration('caspianSecurity').update('enableTelemetry', true, true);
+      if (followUp === 'Enable (this workspace)') {
+        await vscode.workspace
+          .getConfiguration('caspianSecurity')
+          .update('enableTelemetry', true, vscode.ConfigurationTarget.Workspace);
         this.scheduleDaily();
       }
     }
@@ -197,7 +233,7 @@ export class TelemetryService implements vscode.Disposable {
     return new Promise((resolve, reject) => {
       let url: URL;
       try {
-        url = new URL(TELEMETRY_ENDPOINT);
+        url = new URL(resolveEndpoint());
       } catch {
         resolve(); // Invalid URL — silently skip
         return;

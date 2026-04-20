@@ -42,7 +42,10 @@ export class TaskChecklistViewProvider implements vscode.WebviewViewProvider, vs
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
     this.view = webviewView;
-    webviewView.webview.options = { enableScripts: true };
+    webviewView.webview.options = {
+      enableScripts: true,
+      localResourceRoots: [this.extensionUri],
+    };
     webviewView.webview.html = this.getHtml();
     webviewView.webview.onDidReceiveMessage(
       (msg) => this.handleMessage(msg),

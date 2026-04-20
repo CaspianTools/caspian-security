@@ -43,6 +43,7 @@ export class AISettingsPanel implements vscode.Disposable {
       {
         enableScripts: true,
         retainContextWhenHidden: true,
+        localResourceRoots: [this.extensionUri],
       }
     );
 

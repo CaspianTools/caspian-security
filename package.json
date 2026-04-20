@@ -1,13 +1,13 @@
 {
   "name": "caspian-security",
   "displayName": "Caspian Security",
-  "description": "Context-aware security analysis for VS Code — 164 rules, AI fixes, security score, welcome experience, triage mode, PR-scoped scanning, test suite, and CI pipeline",
+  "description": "Context-aware security analysis for VS Code — 164 rules, AI fixes with minimal-context consent flow, hardened webview (CSP + command allow-list), security score, triage mode, PR-scoped scanning, test suite, and CI pipeline",
   "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Caspian-Explorer/caspian-security"
   },
-  "version": "9.1.1",
+  "version": "9.2.0",
   "publisher": "CaspianTools",
   "license": "MIT",
   "engines": {
@@ -491,6 +491,21 @@
           "type": "string",
           "default": "",
           "description": "Optional model override (leave empty for provider default: Claude claude-sonnet-4-20250514, OpenAI gpt-4o, Gemini gemini-2.0-flash)"
+        },
+        "caspianSecurity.aiFixMinimalContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "When enabled, AI fixes send only the ~20 lines surrounding the finding to the provider instead of the whole file. Safer default — your full file contents never leave your workspace. Disable for complex fixes that need cross-file awareness."
+        },
+        "caspianSecurity.aiFixRequireConsent": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a confirmation dialog before sending any code to the AI provider. Disable if you want AI fixes to run without prompting."
+        },
+        "caspianSecurity.telemetryEndpoint": {
+          "type": "string",
+          "default": "https://telemetry.caspiansecurity.dev/v1/report",
+          "description": "HTTPS endpoint that telemetry is sent to (only used when telemetry is enabled). Must start with https://. Change only if you are running your own aggregation endpoint."
         },
         "caspianSecurity.enablePersistentCache": {
           "type": "boolean",
