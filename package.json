@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/Caspian-Explorer/caspian-security"
   },
-  "version": "9.1.0",
+  "version": "9.1.1",
   "publisher": "CaspianTools",
   "license": "MIT",
   "engines": {
@@ -78,6 +78,10 @@
       {
         "command": "caspian-security.ignoreIssue",
         "title": "Caspian Security: Ignore Issue"
+      },
+      {
+        "command": "caspian-security.ignoreAllByRule",
+        "title": "Caspian Security: Ignore All Issues by Rule"
       },
       {
         "command": "caspian-security.resetFixTracker",
@@ -235,6 +239,10 @@
       {
         "command": "caspian-security.scanBranchChanges",
         "title": "Caspian Security: Scan Branch Changes (PR Scope)"
+      },
+      {
+        "command": "caspian-security.explainRule",
+        "title": "Caspian Security: Explain Rule"
       }
     ],
     "viewsContainers": {

@@ -4,6 +4,12 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [9.1.1] - 2026-04-20
+
+### Fixed
+
+- Declare `caspian-security.ignoreAllByRule` and `caspian-security.explainRule` in the `contributes.commands` manifest section to silence two VS Code menu-item validation warnings emitted during `vsce package`. Both commands were already registered at runtime and wired to the results panel webview — only their manifest declarations were missing.
+
 ## [9.1.0] - 2026-03-28
 
 ### Added
