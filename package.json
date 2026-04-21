@@ -1,13 +1,13 @@
 {
   "name": "caspian-security",
   "displayName": "Caspian Security",
-  "description": "Context-aware security analysis for VS Code — 192 rules (incl. 28 provider-prefix secret detectors), AI fixes with minimal-context consent flow, hardened webview, reusable GitHub Action with SARIF upload, CLI scanner, signed Open VSX release",
+  "description": "Context-aware security analysis for VS Code — 240+ rules covering SSRF, XXE, SSTI, insecure deserialization, JWT alg confusion, 28 provider-prefix secret detectors, plus a git-history secret scanner, AI fixes, hardened webview, reusable GitHub Action with SARIF upload, and Open VSX release",
   "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Caspian-Explorer/caspian-security"
   },
-  "version": "9.3.0",
+  "version": "9.4.0",
   "publisher": "CaspianTools",
   "license": "MIT",
   "engines": {
@@ -544,6 +544,7 @@
     "check-updates": "npm run compile && node out/cli/checkUpdates.js",
     "scan": "npm run compile && node out/cli/scan.js",
     "self-scan": "npm run compile && node out/cli/scan.js . --format text --fail-on error --exclude out,node_modules,.git,coverage",
+    "scan-git-history": "npm run compile && node out/cli/gitHistoryScan.js",
     "publish:vscode": "vsce publish",
     "publish:openvsx": "ovsx publish"
   },

@@ -9,6 +9,11 @@ import { databaseRules } from './databaseRules';
 import { fileHandlingRules } from './fileHandlingRules';
 import { secretsRules } from './secretsRules';
 import { providerSecretsRules } from './providerSecretsRules';
+import { ssrfRules } from './ssrfRules';
+import { deserializationRules } from './deserializationRules';
+import { sstiRules } from './sstiRules';
+import { xxeRules } from './xxeRules';
+import { jwtRules } from './jwtRules';
 import { frontendRules } from './frontendRules';
 import { businessLogicRules } from './businessLogicRules';
 import { loggingRules } from './loggingRules';
@@ -26,12 +31,18 @@ import {
 import { securityHeadersRules } from './securityHeadersRules';
 
 const allRulesByCategory: Record<SecurityCategory, SecurityRule[]> = {
-  [SecurityCategory.AuthAccessControl]: [...authRules, ...kotlinAuthRules],
-  [SecurityCategory.InputValidationXSS]: [...inputValidationRules, ...kotlinXssRules],
+  [SecurityCategory.AuthAccessControl]: [...authRules, ...jwtRules, ...kotlinAuthRules],
+  [SecurityCategory.InputValidationXSS]: [
+    ...inputValidationRules,
+    ...deserializationRules,
+    ...sstiRules,
+    ...xxeRules,
+    ...kotlinXssRules,
+  ],
   [SecurityCategory.CSRFProtection]: csrfRules,
   [SecurityCategory.CORSConfiguration]: corsRules,
   [SecurityCategory.EncryptionDataProtection]: [...encryptionRules, ...kotlinEncryptionRules],
-  [SecurityCategory.APISecurity]: apiSecurityRules,
+  [SecurityCategory.APISecurity]: [...apiSecurityRules, ...ssrfRules],
   [SecurityCategory.DatabaseSecurity]: [...databaseRules, ...kotlinDatabaseRules],
   [SecurityCategory.FileHandling]: [...fileHandlingRules, ...kotlinFileRules],
   [SecurityCategory.SecretsCredentials]: [...secretsRules, ...providerSecretsRules, ...kotlinSecretsRules],

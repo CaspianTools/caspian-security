@@ -4,6 +4,28 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [9.4.0] - 2026-04-21
+
+Phase 2 of the roadmap — five new vulnerability-class families and a git-history secret scanner. All-additive release; no behaviour change to existing rules or workflows.
+
+### Added — vulnerability coverage
+
+- **SSRF (`SSRF001`–`SSRF009`).** Server-side fetch / axios / http / requests / urllib / RestTemplate / HttpClient / curl_exec / `http.Get` called with `req.*`, `request.*`, `params.*`, `body.*`, or a url-shaped user-input variable. Each rule has a shared `suppressIfNearby` allow-list so code that already validates URLs (`new URL(...) + isAllowedHost`, `sanitizeUrl`, SSRF-guard helpers) does not re-flag. Slotted into category APISecurity.
+- **Insecure deserialization (`DESER001`–`DESER009`).** `pickle.loads`, `marshal.loads`, `yaml.load` (without `SafeLoader`), `yaml.unsafe_load`, Java `ObjectInputStream.readObject`, .NET `BinaryFormatter` / `SoapFormatter` / `NetDataContractSerializer`, PHP `unserialize($_GET|$_POST|$_REQUEST|$_COOKIE)`, Node `eval`/`Function`/`vm.runInNewContext` on `req.*`, Ruby `YAML.load` / `Marshal.load` on `params`. Slotted into InputValidationXSS.
+- **SSTI / template injection (`SSTI001`–`SSTI008`).** Flask `render_template_string`, Jinja2 `Template(user_input)` / `env.from_string(user_input)`, EJS, Handlebars, Pug, Ruby ERB, Java Velocity + Freemarker, PHP Twig + Smarty — all anchored on "compile a template from a user-supplied string".
+- **XXE (`XXE001`–`XXE009`).** Java `DocumentBuilderFactory` / `SAXParserFactory` / `XMLInputFactory` without the three canonical hardening feature flags. Python `lxml.etree.*` without a safe parser. Python stdlib `xml.etree.ElementTree` / `xml.sax` / `xml.dom.minidom` (recommends `defusedxml`). .NET `XmlDocument` / `XmlTextReader` without `XmlResolver = null`. `.NET DtdProcessing = DtdProcessing.Parse`. PHP `simplexml_load_*` / `DOMDocument` without `libxml_disable_entity_loader`. Node `libxmljs.parseXml({ noent: true })`.
+- **JWT misuse (`JWT001`–`JWT007`).** `alg: none` accepted; `jwt.verify(token, key)` without explicit `algorithms` list (algorithm-confusion risk); `jwt.decode()` used where `jwt.verify()` is required; PyJWT `decode` without `algorithms=`; Java `Jwts.parser().setSigningKey(...)` without `.requireAlgorithm(...)`; `ignoreExpiration: true` / `verify_exp=False`; missing `iss` / `aud` checks. Slotted into AuthAccessControl.
+
+### Added — tooling
+
+- **Git-history secret scanner CLI (`out/cli/gitHistoryScan.js`).** Walks every commit reachable from `--all` via `git log -p`, runs the provider-prefix secret rules against every ADDED line, and reports each historical leak with commit SHA, author, ISO date, file, and line number. Grouped-by-commit text output leads with "Next steps: rotate the secret at the provider NOW, then rewrite history with BFG / git-filter-repo, then wire up the CI Action so it cannot happen again". JSON output also available.
+- New npm script `npm run scan-git-history`. `--rules secrets|all`, `--max-commits N`, `--format json|text`, `--output FILE` flags.
+
+### Changed
+
+- `package.json` description refreshed to reflect the new scope.
+- Rule totals: **192 → 240+**. Test suite: **691 → 812**. Every new pattern passes the ReDoS guard (<200 ms on every adversarial input).
+
 ## [9.3.0] - 2026-04-21
 
 Phase 1 improvements: CI-native workflow, provider-prefix secret detection, trust-signal documentation. No behaviour change to the VS Code extension itself beyond 28 new rules; big additions live off the extension (CLI, Action, docs).
