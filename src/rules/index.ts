@@ -22,6 +22,9 @@ import { businessLogicRules } from './businessLogicRules';
 import { loggingRules } from './loggingRules';
 import { dependenciesRules } from './dependenciesRules';
 import { infrastructureRules } from './infrastructureRules';
+import { dockerfileRules } from './dockerfileRules';
+import { terraformRules } from './terraformRules';
+import { kubernetesRules } from './kubernetesRules';
 import {
   kotlinAuthRules,
   kotlinXssRules,
@@ -53,7 +56,13 @@ const allRulesByCategory: Record<SecurityCategory, SecurityRule[]> = {
   [SecurityCategory.BusinessLogicPayment]: businessLogicRules,
   [SecurityCategory.LoggingMonitoring]: [...loggingRules, ...kotlinLoggingRules],
   [SecurityCategory.DependenciesSupplyChain]: dependenciesRules,
-  [SecurityCategory.InfrastructureDeployment]: [...infrastructureRules, ...securityHeadersRules],
+  [SecurityCategory.InfrastructureDeployment]: [
+    ...infrastructureRules,
+    ...securityHeadersRules,
+    ...dockerfileRules,
+    ...terraformRules,
+    ...kubernetesRules,
+  ],
 };
 
 export function getAllRules(): SecurityRule[] {

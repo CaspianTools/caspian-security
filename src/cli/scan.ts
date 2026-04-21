@@ -154,6 +154,17 @@ const DEFAULT_EXTENSIONS = new Set([
   'go',
   'rs',
   'kt', 'kts',
+  // v10.0: Infrastructure-as-code formats. Rules narrow per file type via
+  // `filePatterns.include` — e.g. Terraform rules only fire on .tf files.
+  'yaml', 'yml',
+  'tf', 'tfvars', 'hcl',
+]);
+
+/** Filenames (no extension) we should also scan — Dockerfiles etc. */
+const DEFAULT_FILENAMES = new Set([
+  'Dockerfile',
+  'dockerfile',
+  'Containerfile',
 ]);
 
 const DEFAULT_EXCLUDES = [
@@ -180,6 +191,16 @@ const EXT_TO_LANGUAGE: Record<string, string> = {
   go: 'go',
   rs: 'rust',
   kt: 'kotlin', kts: 'kotlin',
+  // v10.0 IaC
+  yaml: 'yaml', yml: 'yaml',
+  tf: 'terraform', tfvars: 'terraform', hcl: 'terraform',
+};
+
+/** Filenames (no extension) mapped to the languageId the rules' filePatterns should match. */
+const FILENAME_TO_LANGUAGE: Record<string, string> = {
+  Dockerfile: 'dockerfile',
+  dockerfile: 'dockerfile',
+  Containerfile: 'dockerfile',
 };
 
 function walkFiles(root: string, excludes: string[], extraIncludes: string[]): string[] {
@@ -207,12 +228,21 @@ function walkFiles(root: string, excludes: string[], extraIncludes: string[]): s
 
       const ext = path.extname(ent.name).slice(1).toLowerCase();
       const includedByExt = DEFAULT_EXTENSIONS.has(ext);
+      const includedByName = DEFAULT_FILENAMES.has(ent.name);
       const includedByFlag = extraIncludes.some(tok => full.includes(tok));
-      if (!includedByExt && !includedByFlag) { continue; }
+      if (!includedByExt && !includedByName && !includedByFlag) { continue; }
       found.push(full);
     }
   }
   return found;
+}
+
+/** Resolve the Caspian languageId for a given filesystem path, honouring extension + filename rules. */
+function resolveLanguage(filePath: string): string {
+  const base = path.basename(filePath);
+  if (FILENAME_TO_LANGUAGE[base]) { return FILENAME_TO_LANGUAGE[base]; }
+  const ext = path.extname(base).slice(1).toLowerCase();
+  return EXT_TO_LANGUAGE[ext] || ext;
 }
 
 // --- Core scan loop -------------------------------------------------------
@@ -545,8 +575,7 @@ async function main(): Promise<void> {
 
     if (isGeneratedFile(fp, text)) { filesSkipped++; continue; }
 
-    const ext = path.extname(fp).slice(1).toLowerCase();
-    const languageId = EXT_TO_LANGUAGE[ext] || ext;
+    const languageId = resolveLanguage(fp);
     const relativePath = path.relative(opts.workspace, fp) || fp;
 
     const issues = scanFile(fp, text, rules);

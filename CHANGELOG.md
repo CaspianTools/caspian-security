@@ -4,6 +4,38 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [10.0.0] - 2026-04-21
+
+**Caspian graduates from "code scanner" to "code + infrastructure scanner"** — and earns its major-version bump.
+
+The major-version marker reflects a new scanning domain. Everything Caspian did before is preserved and improved; we added a parallel surface (Dockerfile, Terraform/HCL, Kubernetes YAML) that's as thorough as the existing 9.x code rules.
+
+### Added — Infrastructure-as-code
+
+- **Dockerfile rules (`DOCKER001`–`DOCKER008`).** `:latest` / unpinned base images, missing non-root `USER`, secrets baked into `ENV` / `ARG` / `RUN`, `ADD` from a URL, `curl | sh`, package-install without `--no-install-recommends` / pinned versions, `HEALTHCHECK NONE`. Fires on `Dockerfile`, `Containerfile`, `*.dockerfile`.
+- **Terraform / HCL rules (`TF001`–`TF010`).** `0.0.0.0/0` ingress, public S3 ACLs / missing public-access blocks, wildcard IAM `Action` / `Resource` (HCL lowercase and JSON forms), `publicly_accessible = true` RDS, missing at-rest encryption on S3 / EBS / RDS, hardcoded `master_password`, disabled CloudTrail, `AdministratorAccess` attached to task/function roles, HTTP-without-HTTPS-redirect load balancers, KMS `kms:*` to account root. Fires on `.tf`, `.tfvars`, `.hcl`.
+- **Kubernetes manifest rules (`K8S001`–`K8S008`).** `privileged: true`, `hostNetwork` / `hostPID` / `hostIPC: true`, `runAsUser: 0` / `allowPrivilegeEscalation: true`, `hostPath` volumes, dangerous Linux capabilities (`SYS_ADMIN`, `NET_ADMIN`, `SYS_PTRACE`, `BPF`), wildcard RBAC verbs / resources, `LoadBalancer` without `loadBalancerSourceRanges`. Fires on `*.yaml` / `*.yml`; excludes GitHub Actions workflows and `docker-compose.yaml`.
+
+### Added — Quality gate
+
+- **Vulnerable-corpus regression suite** (`src/__tests__/vulnerableCorpus.test.ts` + `src/__tests__/fixtures/vulnerable-corpus/`). Small synthetic fixture tree containing intentional vulnerabilities across every rule family. Each fixture has a minimum set of rule codes it MUST detect — any rule that stops firing breaks the build. Ratchet-style (new detections are fine; removed detections fail). No external repo downloads, CI-viable.
+- Caught two real regressions during development: `JWT002` regex rejected string-literal secrets; `TF003` regex missed HCL's lowercase `actions` / `resources`. Both fixed in the same commit that added the test.
+
+### Changed — CLI / file walker
+
+- The CLI now scans `*.yaml`, `*.yml`, `*.tf`, `*.tfvars`, `*.hcl` by default, and special-cases filenames `Dockerfile`, `Containerfile`, `dockerfile`. Rules use `filePatterns.include` to scope per file type — Dockerfile rules don't fire on `.tf`, etc.
+- New `resolveLanguage()` helper maps filename + extension to Caspian's `languageId` for downstream file-gated rules.
+
+### Stats
+
+- **Rule totals: 270+ → 295+.** Test suite: **880 → 961** (+81). Two new test suites (`vulnerableCorpus`, plus the 26 new rules contribute to `redosGuard`).
+- Lint clean, compile clean, self-scan strict-mode clean.
+
+### Upgrade notes
+
+- No setting changes. No rule renames. Old code rules fire identically; new IaC rules only activate on matching file types.
+- Users who keep `caspianSecurity.enabledLanguages` locked to code-only languages won't see IaC findings inside VS Code — the CLI still scans them in CI.
+
 ## [9.5.0] - 2026-04-21
 
 Phase 3 of the roadmap. Caspian gains its first dataflow-aware analysis (intra-file taint tracking), a multi-line context fix that unblocks strict CI gating, and four new vulnerability-class families. The single biggest detection-quality jump since v8.0.

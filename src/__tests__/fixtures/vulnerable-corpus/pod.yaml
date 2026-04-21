@@ -1,0 +1,52 @@
+# Synthetic K8s manifest fixture. Every security misconfiguration is deliberate.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-pod
+spec:
+  # K8S002
+  hostNetwork: true
+  # K8S003
+  hostPID: true
+  containers:
+    - name: app
+      image: nginx:latest
+      securityContext:
+        # K8S001
+        privileged: true
+        # K8S004
+        runAsUser: 0
+        allowPrivilegeEscalation: true
+        capabilities:
+          # K8S006
+          add: ["SYS_ADMIN", "NET_ADMIN"]
+      volumeMounts:
+        - name: host-root
+          mountPath: /host
+  volumes:
+    - name: host-root
+      # K8S005
+      hostPath:
+        path: /
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bad-service
+spec:
+  # K8S008
+  type: LoadBalancer
+  selector:
+    app: bad-pod
+  ports:
+    - port: 80
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: too-much
+rules:
+  # K8S007
+  - apiGroups: [""]
+    resources: ["*"]
+    verbs: ["*"]

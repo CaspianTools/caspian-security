@@ -47,7 +47,8 @@ export const jwtRules: SecurityRule[] = [
     patterns: [
       // `jwt.verify(token, key)` with only 2-3 args and no `algorithms` key anywhere in the options.
       // Bounded: must be on one line, opts object must be short, no `algorithms:` inside.
-      /\bjwt\.verify\s*\(\s*\w[\w.]*\s*,\s*\w[\w.]*\s*(?:,\s*\{[^}]{0,200}\}\s*)?\)/,
+      // Second arg may be an identifier OR a string literal (hardcoded secret).
+      /\bjwt\.verify\s*\(\s*\w[\w.]*\s*,\s*(?:\w[\w.]*|['"][^'"]+['"])\s*(?:,\s*\{[^}]{0,200}\}\s*)?\)/,
     ],
     negativePatterns: [
       /algorithms?\s*:\s*\[/,
