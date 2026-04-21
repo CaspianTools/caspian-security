@@ -161,6 +161,10 @@ export class ConfigManager {
     return this.config.get('maxFileSize', 500000);
   }
 
+  getEnableTaintTracking(): boolean {
+    return this.config.get('enableTaintTracking', true);
+  }
+
   getAIProvider(): string {
     return this.config.get('aiProvider', 'anthropic');
   }

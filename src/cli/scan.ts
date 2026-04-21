@@ -39,6 +39,8 @@ import {
   CATEGORY_LABELS,
 } from '../types';
 import { isGeneratedFile } from '../generatedFileDetector';
+import { buildLineStates, isInsideComment, isInsideStringContent } from '../scanContext';
+import { runTaintAnalysis } from '../taint';
 
 // --- CLI argument parsing -------------------------------------------------
 
@@ -213,46 +215,10 @@ function walkFiles(root: string, excludes: string[], extraIncludes: string[]): s
   return found;
 }
 
-// --- Context-awareness helpers (mirror of src/analyzer.ts) ----------------
-
-function isInsideComment(line: string, column: number): boolean {
-  const singleLineComment = line.indexOf('//');
-  if (singleLineComment !== -1 && column > singleLineComment) {
-    const before = line.substring(0, singleLineComment);
-    const s = (before.match(/'/g) || []).length;
-    const d = (before.match(/"/g) || []).length;
-    const b = (before.match(/`/g) || []).length;
-    if (s % 2 === 0 && d % 2 === 0 && b % 2 === 0) { return true; }
-  }
-  const blockStart = /\/\*/g;
-  let m;
-  while ((m = blockStart.exec(line)) !== null) {
-    const start = m.index;
-    const endIdx = line.indexOf('*/', start + 2);
-    const end = endIdx !== -1 ? endIdx + 2 : line.length;
-    if (column >= start && column < end) { return true; }
-  }
-  return false;
-}
-
-function isInsideStringContent(line: string, column: number): boolean {
-  let inS = false, inD = false, inT = false, depth = 0;
-  for (let i = 0; i < column; i++) {
-    const ch = line[i];
-    const prev = i > 0 ? line[i - 1] : '';
-    if (prev === '\\') { continue; }
-    if (!inD && !inT && ch === "'") { inS = !inS; }
-    else if (!inS && !inT && ch === '"') { inD = !inD; }
-    else if (!inS && !inD && ch === '`') { inT = !inT; }
-    else if (inT && ch === '$' && i + 1 < line.length && line[i + 1] === '{') { depth++; }
-    else if (inT && depth > 0 && ch === '}') { depth--; }
-  }
-  if (inS || inD) { return true; }
-  if (inT && depth === 0) { return true; }
-  return false;
-}
-
 // --- Core scan loop -------------------------------------------------------
+// Context-awareness helpers (isInsideComment / isInsideStringContent) live
+// in ../scanContext and are shared with the VS Code extension analyzer so
+// both the CLI and the extension see the same multi-line context (F11).
 
 interface FileResult {
   filePath: string;
@@ -268,6 +234,10 @@ function scanFile(
 ): SecurityIssue[] {
   const lines = text.split('\n');
   const issues: SecurityIssue[] = [];
+
+  // F11: pre-compute per-line context state so multi-line template literals
+  // and block comments are recognised by contextAware rules.
+  const lineStates = buildLineStates(text);
 
   // Mirror of src/analyzer.ts semantics: Informational rules are deferred —
   // we collect up to 10 candidate lines per rule, then pick one "best"
@@ -316,7 +286,8 @@ function scanFile(
         if (!matched) { continue; }
 
         if (rule.contextAware) {
-          if (isInsideComment(line, column) || isInsideStringContent(line, column)) { continue; }
+          const ls = lineStates[lineNum];
+          if (isInsideComment(line, column, ls) || isInsideStringContent(line, column, ls)) { continue; }
         }
 
         if (rule.negativePatterns) {
@@ -371,6 +342,16 @@ function scanFile(
         break; // one match per rule per line
       }
     }
+  }
+
+  // Phase 3 (v9.5.0): intra-file taint pass. Bounded to 100 ms / file.
+  try {
+    const taintFindings = runTaintAnalysis(text, 100);
+    for (const t of taintFindings) {
+      issues.push(t);
+    }
+  } catch {
+    // Don't let taint failures hide regular findings.
   }
 
   // For each Informational rule, keep at most one issue per file — prefer

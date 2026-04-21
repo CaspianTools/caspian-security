@@ -33,14 +33,22 @@ jobs:
       - name: Compile
         run: npm run compile
 
-      # Scan our own src/ tree. We surface findings in the Security tab via
-      # upload-sarif below but do NOT gate the build on them yet — the
-      # scanner's line-scoped context awareness (see F11 in THREAT_MODEL.md)
-      # false-positives on multi-line template literals used to build webview
-      # HTML, and on test fixtures that deliberately contain password strings.
-      # Once F11 lands (tracked for v9.5 / 10.0), switch this to --fail-on error.
+      # Scan our own src/ tree. F11 (multi-line context awareness) landed in
+      # v9.5.0, so contextAware rules now correctly skip matches inside
+      # multi-line template literals and block comments — the build is back
+      # to gating on Error-severity findings.
+      #
+      # Three directories are excluded by design:
+      #   src/__tests__  — intentional vulnerable code fixtures used to assert
+      #                    that rules fire.
+      #   src/rules      — rule patterns themselves, indistinguishable from
+      #                    real bad code via regex.
+      #   src/cli        — CLI tools legitimately accept paths from process.argv
+      #                    and write to them; the new TAINT003 rule (correctly)
+      #                    flags fs-sink-with-tainted-path. Different threat
+      #                    model than a web app — the user owns their own shell.
       - name: Caspian self-scan
-        run: node out/cli/scan.js . --format sarif --output caspian-self-scan.sarif --fail-on never --exclude out,node_modules,.git,coverage,.github
+        run: node out/cli/scan.js . --format sarif --output caspian-self-scan.sarif --fail-on error --exclude out,node_modules,.git,coverage,.github,__tests__,rules,cli
 
       - name: Upload SARIF to GitHub Code Scanning
         if: always()

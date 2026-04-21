@@ -9,6 +9,11 @@ export const inputValidationRules: SecurityRule[] = [
       /\.innerHTML\s*=/,
       /\.outerHTML\s*=/,
     ],
+    // F11 follow-up: contextAware so matches inside string literals (e.g. a
+    // webview's getHtml() template literal that emits browser-bound JS) and
+    // inside doc comments are skipped. A real `.innerHTML = userInput` in
+    // browser code is not inside a string, so genuine vulns still fire.
+    contextAware: true,
     suggestion: 'Use textContent, createElement, or a sanitization library like DOMPurify',
     category: SecurityCategory.InputValidationXSS,
     ruleType: RuleType.CodeDetectable,
@@ -21,6 +26,7 @@ export const inputValidationRules: SecurityRule[] = [
       /document\.write\s*\(/,
       /document\.writeln\s*\(/,
     ],
+    contextAware: true,
     suggestion: 'Use DOM manipulation methods instead of document.write()',
     category: SecurityCategory.InputValidationXSS,
     ruleType: RuleType.CodeDetectable,

@@ -10,6 +10,10 @@ export const secretsRules: SecurityRule[] = [
       /(?:secret|apiKey|api_key|apiSecret|api_secret)\s*[:=]\s*['"][^'"]{2,}['"]/i,
       /(?:access_token|auth_token|private_key)\s*[:=]\s*['"][^'"]{2,}['"]/i,
     ],
+    // F11 follow-up: contextAware so credentials inside JSDoc / block-comment
+    // examples and inside test-fixture string literals do not fire. A real
+    // assignment in code is not inside a string or comment.
+    contextAware: true,
     suggestion: 'Use environment variables, a secrets manager, or vault for credentials',
     category: SecurityCategory.SecretsCredentials,
     ruleType: RuleType.CodeDetectable,

@@ -6,6 +6,8 @@ import { AdaptiveConfidenceEngine } from './adaptiveConfidence';
 import { CodebaseProfile } from './codebaseProfile';
 import { isGeneratedFile } from './generatedFileDetector';
 import { ConfigManager } from './configManager';
+import { buildLineStates, isInsideComment, isInsideStringContent } from './scanContext';
+import { runTaintAnalysis } from './taint';
 
 export class SecurityAnalyzer {
   private allRules: SecurityRule[];
@@ -49,6 +51,11 @@ export class SecurityAnalyzer {
       const lines = text.split('\n');
       const informationalFired = new Set<string>();
       const informationalCandidates = new Map<string, SecurityIssue[]>();
+      // F11 (v9.5.0): one-pass pre-computation of per-line "is this inside a
+      // multi-line string / block comment". Consumed below by contextAware
+      // filtering so template literals that span hundreds of lines stop
+      // confusing the scanner.
+      const lineStates = buildLineStates(text);
       // Per-file budget: tightened from 10s → 3s. A healthy rule run completes
       // in <100ms on a large file; a pathological regex against adversarial
       // input is the only realistic way to approach this limit, so a shorter
@@ -125,10 +132,14 @@ export class SecurityAnalyzer {
                 continue;
               }
 
-              // Context-aware filtering: skip matches inside comments, strings, or JSX text
+              // Context-aware filtering: skip matches inside comments, strings, or JSX text.
+              // F11: lineStates[lineNum] carries the comment/string state
+              // inherited from the PREVIOUS line so multi-line template
+              // literals / block comments are now handled correctly.
               if (rule.contextAware) {
-                if (isInsideComment(line, column) ||
-                    isInsideStringContent(line, column) ||
+                const ls = lineStates[lineNum];
+                if (isInsideComment(line, column, ls) ||
+                    isInsideStringContent(line, column, ls) ||
                     isInsideJSXText(line, column)) {
                   continue;
                 }
@@ -226,6 +237,20 @@ export class SecurityAnalyzer {
         }
       }
 
+      // Phase 3 (v9.5.0): intra-file taint pass. Bounded budget so a
+      // pathological file can't blow the per-file deadline. Off-switch via
+      // `caspianSecurity.enableTaintTracking` setting.
+      if (config.getEnableTaintTracking()) {
+        try {
+          const taintFindings = runTaintAnalysis(text, 100);
+          for (const t of taintFindings) {
+            issues.push(t);
+          }
+        } catch (e) {
+          console.error('Taint analysis failed:', e);
+        }
+      }
+
       // For informational rules, pick the most relevant line (prefer function bodies over imports/declarations)
       for (const [, candidates] of informationalCandidates) {
         if (candidates.length === 0) { continue; }
@@ -294,75 +319,6 @@ export class SecurityAnalyzer {
     }
     return categories.flatMap(cat => getRulesByCategory(cat));
   }
-}
-
-/**
- * Check if a match position falls inside a single-line comment (// ...)
- */
-function isInsideComment(line: string, column: number): boolean {
-  // Check for single-line comment
-  const singleLineComment = line.indexOf('//');
-  if (singleLineComment !== -1 && column > singleLineComment) {
-    // Make sure the // is not inside a string
-    const beforeSlash = line.substring(0, singleLineComment);
-    const singleQuotes = (beforeSlash.match(/'/g) || []).length;
-    const doubleQuotes = (beforeSlash.match(/"/g) || []).length;
-    const backticks = (beforeSlash.match(/`/g) || []).length;
-    if (singleQuotes % 2 === 0 && doubleQuotes % 2 === 0 && backticks % 2 === 0) {
-      return true;
-    }
-  }
-
-  // Check for block comment on same line: /* ... */
-  const blockCommentStart = /\/\*/g;
-  let blockMatch;
-  while ((blockMatch = blockCommentStart.exec(line)) !== null) {
-    const start = blockMatch.index;
-    const endIdx = line.indexOf('*/', start + 2);
-    const end = endIdx !== -1 ? endIdx + 2 : line.length;
-    if (column >= start && column < end) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-/**
- * Check if a match position falls inside a string literal's content
- * (i.e., the match is text WITHIN quotes, not a code expression).
- * This handles simple cases — not nested template expressions.
- */
-function isInsideStringContent(line: string, column: number): boolean {
-  let inSingle = false;
-  let inDouble = false;
-  let inTemplate = false;
-  let templateDepth = 0;
-
-  for (let i = 0; i < column; i++) {
-    const ch = line[i];
-    const prev = i > 0 ? line[i - 1] : '';
-
-    if (prev === '\\') { continue; }
-
-    if (!inDouble && !inTemplate && ch === "'") {
-      inSingle = !inSingle;
-    } else if (!inSingle && !inTemplate && ch === '"') {
-      inDouble = !inDouble;
-    } else if (!inSingle && !inDouble && ch === '`') {
-      inTemplate = !inTemplate;
-    } else if (inTemplate && ch === '$' && i + 1 < line.length && line[i + 1] === '{') {
-      templateDepth++;
-    } else if (inTemplate && templateDepth > 0 && ch === '}') {
-      templateDepth--;
-    }
-  }
-
-  // If we're inside a string (and not inside a ${} expression), the match is in string content
-  if (inSingle || inDouble) { return true; }
-  if (inTemplate && templateDepth === 0) { return true; }
-
-  return false;
 }
 
 /**

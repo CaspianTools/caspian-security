@@ -86,7 +86,67 @@ export const frontendRules: SecurityRule[] = [
       /__proto__/,
       /\bconstructor\s*\[/,
     ],
+    contextAware: true,
     suggestion: 'Use Object.create(null) for dictionaries; validate keys to prevent __proto__ and constructor pollution',
+    category: SecurityCategory.FrontendSecurity,
+    ruleType: RuleType.CodeDetectable,
+  },
+  {
+    // Phase 3 (v9.5.0) — Object.assign / spread of untrusted objects.
+    // The taint engine flags the same shape with provenance (TAINT008);
+    // this rule fires on the static call regardless of whether the data
+    // crossed a function boundary.
+    code: 'FE007a',
+    message: 'Object.assign with a request-shaped second argument — prototype pollution risk',
+    severity: SecuritySeverity.Error,
+    patterns: [
+      /\bObject\.assign\s*\(\s*\{[^}]*\}\s*,\s*(?:req|request|ctx)\.(?:body|query|params)/,
+      /\bObject\.assign\s*\(\s*[\w$]+\s*,\s*(?:req|request|ctx)\.(?:body|query|params)/,
+    ],
+    suppressIfNearby: [
+      /\bvalidate(?:Body|Input|Schema)\s*\(/,
+      /\bzod\.|\bjoi\./i,
+      /\.parse\s*\(/,
+    ],
+    suggestion:
+      'Object.assign of a user-controlled second arg can pollute Object.prototype via the __proto__ key. ' +
+      'Validate the body against a schema (Zod / Joi / express-validator) BEFORE merging, or use a manual ' +
+      'allow-list copy: `for (const k of ALLOWED) target[k] = source[k];`',
+    category: SecurityCategory.FrontendSecurity,
+    ruleType: RuleType.CodeDetectable,
+  },
+  {
+    code: 'FE007b',
+    message: 'lodash _.merge / _.defaultsDeep with untrusted source — prototype pollution',
+    severity: SecuritySeverity.Error,
+    patterns: [
+      /\b_\.(?:merge|mergeWith|defaultsDeep)\s*\(\s*[^,]+,\s*(?:req|request|ctx)\.(?:body|query|params)/,
+    ],
+    suppressIfNearby: [
+      /lodash@(?:4\.17\.21|4\.18|5\.|6\.|7\.)/, // recent versions are patched
+    ],
+    suggestion:
+      'lodash <= 4.17.20 has known prototype-pollution CVEs in merge / defaultsDeep / mergeWith. ' +
+      'Upgrade to >= 4.17.21 AND validate the source object against a schema before merging.',
+    category: SecurityCategory.FrontendSecurity,
+    ruleType: RuleType.CodeDetectable,
+  },
+  {
+    code: 'FE007c',
+    message: 'Spread of req.body/query/params into a trusted object — prototype pollution',
+    severity: SecuritySeverity.Warning,
+    patterns: [
+      /\{\s*\.\.\.(?:req|request|ctx)\.(?:body|query|params)/,
+    ],
+    suppressIfNearby: [
+      /\bvalidate(?:Body|Input|Schema)\s*\(/,
+      /\bzod\.|\bjoi\./i,
+      /\.parse\s*\(/,
+    ],
+    suggestion:
+      'Spreading user-controlled objects copies every key including `__proto__` (in older Node / browser ' +
+      'engines without the spread-pollution fix). Validate against a schema first, or build the target ' +
+      'with an explicit allow-list.',
     category: SecurityCategory.FrontendSecurity,
     ruleType: RuleType.CodeDetectable,
   },
