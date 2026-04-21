@@ -4,6 +4,45 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [10.5.0] - 2026-04-21
+
+The lightbulb release. Hover on a Caspian finding, press Ctrl+. (or click the yellow lightbulb), and get a deterministic one-click fix for the 13 most common mechanical remediations — no AI round-trip, no waiting on a consent dialog, no spend on provider tokens.
+
+### Added
+
+- **[src/codeActionFixes.ts](src/codeActionFixes.ts)** — pure-function fix registry. Each entry takes a minimal `DocumentView` + the issue's line/column and returns a `FixResult` (edits + title). No `vscode` import, fully unit-testable.
+- **[src/codeActionProvider.ts](src/codeActionProvider.ts)** — thin `vscode.CodeActionProvider` wrapper that converts `FixResult`s into `vscode.CodeAction` quick-fixes. Registered for every enabled language plus `dockerfile`, `yaml`, `terraform`, and glob patterns for `**/Dockerfile` / `**/*.tf` / `**/*.tfvars` / `**/*.hcl` / `**/*.yaml`.
+- **13 mechanical fixes** across every major rule family:
+  - **Kubernetes** — `K8S001` flip `privileged: true→false`, `K8S002` remove `hostNetwork: true` line, `K8S003` remove `hostPID`/`hostIPC: true` line, `K8S004` fix `runAsUser: 0` → `runAsUser: 1000` OR `allowPrivilegeEscalation: true→false`.
+  - **Terraform** — `TF002` flip `acl = "public-read"` to `"private"`, `TF004` flip `publicly_accessible = true→false`.
+  - **JWT** — `JWT002` insert `{ algorithms: ['RS256'] }` as third arg to `jwt.verify(token, key)`, `JWT006` remove `ignoreExpiration: true` or flip `verify_exp=False→True`.
+  - **Python deserialisation** — `DESER003` rename `yaml.unsafe_load → yaml.safe_load`, `DESER004` rename `yaml.load( → yaml.safe_load(` (skips if `SafeLoader` already specified).
+  - **TLS** — `ENC004` flip `rejectUnauthorized: false→true`.
+  - **Dockerfile** — `DOCKER008` comment-out `HEALTHCHECK NONE` (recoverable; doesn't delete).
+  - **CORS** — `CORS001` replace `origin: '*'` with `origin: false` (reject by default; user adds allow-list after).
+- **21 unit tests** ([src/__tests__/codeActionFixes.test.ts](src/__tests__/codeActionFixes.test.ts)) exercising every fix — happy path, shape-mismatch returns null, out-of-bounds tolerance, "already-safe" suppression.
+
+### Why deterministic text-only fixes
+
+The existing `Caspian Security: Fix Issue with AI` command handles the ambiguous cases (which DOMPurify call? what's the right Zod schema?) and has a consent dialog for good reason. These 13 fixes are the cases where the right answer is unambiguous — `privileged: true` has exactly one correct remediation, and it's `privileged: false`. Showing a lightbulb cuts the friction to a single keystroke for the 80% of findings that don't need judgment.
+
+### How it shows up in VS Code
+
+1. Scan runs, diagnostic appears with the usual `[Category] RULE_CODE: message` format.
+2. VS Code displays a yellow lightbulb in the gutter; clicking it (or `Ctrl+.`) lists the fix with a concrete title (`Set privileged: false`, `Remove hostNetwork: true`, etc.).
+3. Applying triggers a `WorkspaceEdit` — instant, reversible via undo.
+4. The fix is marked `isPreferred`, so "Apply quick fix" / `Ctrl+.` → Enter selects it by default.
+
+### Changed
+
+- Test suite: **989 → 1010** (+21). Rules unchanged at 295+.
+- [src/extension.ts](src/extension.ts) activates the provider once via `registerCaspianCodeActionProvider(context, enabledLanguages)`.
+
+### Notes
+
+- The provider is **conservative**: every fix returns null if the matched line's shape doesn't exactly fit the expected pattern. False "auto-fix" is worse than no auto-fix.
+- The AI-fix path is untouched. Users still get `Caspian Security: Fix Issue with AI` for everything these mechanical fixes don't cover.
+
 ## [10.4.0] - 2026-04-21
 
 Caspian is now a Model Context Protocol server. Any MCP client — Claude Desktop, Cursor, Zed, Cline — can call scans directly from tool use. "Use Caspian to scan this repo" goes from four-step manual flow to one-line prompt.

@@ -38,17 +38,21 @@ jobs:
       # multi-line template literals and block comments — the build is back
       # to gating on Error-severity findings.
       #
-      # Three directories are excluded by design:
-      #   src/__tests__  — intentional vulnerable code fixtures used to assert
-      #                    that rules fire.
-      #   src/rules      — rule patterns themselves, indistinguishable from
-      #                    real bad code via regex.
-      #   src/cli        — CLI tools legitimately accept paths from process.argv
-      #                    and write to them; the new TAINT003 rule (correctly)
-      #                    flags fs-sink-with-tainted-path. Different threat
-      #                    model than a web app — the user owns their own shell.
+      # Four directories are excluded by design:
+      #   src/__tests__    — intentional vulnerable code fixtures used to assert
+      #                      that rules fire.
+      #   src/rules        — rule patterns themselves, indistinguishable from
+      #                      real bad code via regex.
+      #   src/cli          — CLI tools legitimately accept paths from process.argv
+      #                      and write to them; TAINT003 (correctly) flags fs-sink-
+      #                      with-tainted-path. Different threat model than a web
+      #                      app — the user owns their own shell.
+      #   src/codeActions  — quick-fix definitions literally contain string forms
+      #                      of the dangerous code each rule detects (e.g. the
+      #                      JWT002 fix references `jwt.verify(token, key)`). Not
+      #                      runnable code — it's fix metadata.
       - name: Caspian self-scan
-        run: node out/cli/scan.js . --format sarif --output caspian-self-scan.sarif --fail-on error --exclude out,node_modules,.git,coverage,.github,__tests__,rules,cli
+        run: node out/cli/scan.js . --format sarif --output caspian-self-scan.sarif --fail-on error --exclude out,node_modules,.git,coverage,.github,__tests__,rules,cli,codeActions
 
       - name: Upload SARIF to GitHub Code Scanning
         if: always()

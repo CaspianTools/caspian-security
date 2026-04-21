@@ -67,6 +67,7 @@ Findings land in the GitHub Security tab automatically. The npm CLI and the exte
 
 ## Key Capabilities
 
+- **One-click quick-fix lightbulb** -- 13 mechanical remediations (Kubernetes `privileged: true→false`, Terraform `publicly_accessible = false`, `jwt.verify` gets `algorithms: ['RS256']`, `yaml.unsafe_load → safe_load`, etc.) applied instantly via Ctrl+. No AI round-trip, fully reversible with undo
 - **Context-aware analysis** -- classifies issues by variable source (hardcoded, static, or dynamic) with confidence badges
 - **AI fixes with function-level understanding** -- sends the entire enclosing function and traced variable definitions to the AI, not just 20 lines of context
 - **164 security rules** across 14 categories with actionable fix suggestions

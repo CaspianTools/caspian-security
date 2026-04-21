@@ -33,6 +33,7 @@ import { registerTaskCommands } from './taskCommands';
 import { TaskDetailPanel } from './taskDetailPanel';
 import { WelcomePanel } from './welcomePanel';
 import { SecurityScoreService } from './securityScore';
+import { registerCaspianCodeActionProvider } from './codeActions/provider';
 import { AutoVerifier } from './autoVerifier';
 
 const BATCH_SIZE = 50;
@@ -152,6 +153,11 @@ export function activate(context: vscode.ExtensionContext) {
     securityScore = new SecurityScoreService(resultsStore, fixTracker);
     context.subscriptions.push(welcomePanel);
     context.subscriptions.push(securityScore);
+
+    // v10.5: quick-fix lightbulb provider. Uses the same enabled-languages
+    // setting as the analyzer, so users who disabled a language don't get
+    // lightbulbs for it.
+    registerCaspianCodeActionProvider(context, configManager.getEnabledLanguages());
 
     context.subscriptions.push(configManager);
     context.subscriptions.push(diagnosticsManager);
