@@ -301,7 +301,7 @@ For GitHub Actions, a reusable composite action is bundled at
 `.github/actions/scan`. Example usage in a downstream repo:
 
 ```yaml
-- uses: Caspian-Explorer/caspian-security/.github/actions/scan@v9.3.0
+- uses: Caspian-Explorer/caspian-security/.github/actions/scan@v10.1.0
   with:
     path: .
     fail-on: error
@@ -310,6 +310,37 @@ For GitHub Actions, a reusable composite action is bundled at
 The action compiles Caspian on the runner and uploads SARIF to GitHub Code
 Scanning automatically. A copy-pasteable workflow lives at
 `.github/examples/caspian-scan.yml`.
+
+### 3a. Adopting Caspian into an existing codebase: baselines
+
+If your repo already has hundreds of findings, a big-bang remediation is
+unrealistic. Caspian supports a **baseline file** that records the current
+set of findings and gates the build only on NEW findings beyond that.
+
+```bash
+# One-time: generate the baseline from the current scan.
+node out/cli/scan.js . --baseline .caspian-baseline.json --update-baseline
+
+# Commit the baseline. Every subsequent scan suppresses those findings.
+node out/cli/scan.js . --baseline .caspian-baseline.json --fail-on error
+```
+
+The baseline records per-file, per-rule counts. If a new `XSS001` appears
+in a file that already had two `XSS001` findings on record, the scan exits
+non-zero. If a team fixes one of the two, re-running `--update-baseline`
+drops the count to one, and any new occurrence fails the build. The file
+is plain JSON, diff-friendly, and gets reviewed like any other code
+artefact.
+
+In the GitHub Action:
+
+```yaml
+- uses: Caspian-Explorer/caspian-security/.github/actions/scan@v10.1.0
+  with:
+    path: .
+    fail-on: error
+    baseline: .caspian-baseline.json    # committed at repo root
+```
 
 ### 4. VSIX signing (planned)
 

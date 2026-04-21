@@ -4,6 +4,36 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [10.1.0] - 2026-04-21
+
+The adoption-killer feature: **baseline / suppression file support**. Drop Caspian into any existing codebase without a big-bang remediation.
+
+### Added
+
+- **Baseline file support.** `caspian-scan --baseline .caspian-baseline.json` loads a per-file, per-rule count of known findings and suppresses them from the exit-code gate. Only NEW findings above the baseline counts fail the build. `--update-baseline` regenerates the file from the current scan.
+- **`src/baseline.ts`** — `loadBaseline`, `buildBaseline`, `writeBaseline`, `applyBaseline`, `normalisePath`. Counts-based matching (no fingerprinting) so diffs are human-readable and the baseline auto-tightens as issues get fixed. Path-normalised so baselines survive Windows ↔ Linux CI.
+- **GitHub Action `baseline` input.** Drop `baseline: .caspian-baseline.json` into your workflow; `.github/actions/scan/action.yml` threads it through to the CLI.
+- **12 new unit tests** under `src/__tests__/baseline.test.ts` covering build, apply, normalisation, round-trip, and three flavours of load-error.
+
+### Why counts, not fingerprints
+
+Fingerprints either need a line number (fragile; breaks on every edit) or a normalised-context hash (fragile for different reasons and opaque in diffs). Per-file / per-rule counts are human-readable, git-diff-friendly, and auto-tighten: fix one of three findings, the count drops on `--update-baseline`, and adding a new one fails the build.
+
+### Example
+
+```bash
+node out/cli/scan.js . --baseline .caspian-baseline.json --update-baseline
+# (review + commit .caspian-baseline.json)
+node out/cli/scan.js . --baseline .caspian-baseline.json --fail-on error
+# → 0 new findings, exit 0
+```
+
+### Changed
+
+- CLI help text documents `--baseline` and `--update-baseline`.
+- [BUILD.md](BUILD.md) gains a "Section 3a — adopting Caspian into an existing codebase" with the full workflow.
+- Rule totals unchanged at **295+**. Test suite: **961 → 973** (+12 baseline tests).
+
 ## [10.0.0] - 2026-04-21
 
 **Caspian graduates from "code scanner" to "code + infrastructure scanner"** — and earns its major-version bump.

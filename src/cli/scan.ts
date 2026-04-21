@@ -41,6 +41,7 @@ import {
 import { isGeneratedFile } from '../generatedFileDetector';
 import { buildLineStates, isInsideComment, isInsideStringContent } from '../scanContext';
 import { runTaintAnalysis } from '../taint';
+import { loadBaseline, buildBaseline, writeBaseline, applyBaseline, Baseline } from '../baseline';
 
 // --- CLI argument parsing -------------------------------------------------
 
@@ -52,6 +53,8 @@ interface CliOptions {
   include: string[];
   exclude: string[];
   maxFileSize: number;
+  baselinePath?: string;
+  updateBaseline: boolean;
 }
 
 function parseArgs(argv: string[]): CliOptions {
@@ -62,6 +65,7 @@ function parseArgs(argv: string[]): CliOptions {
     include: [],
     exclude: [],
     maxFileSize: 500_000,
+    updateBaseline: false,
   };
 
   let positionalSeen = false;
@@ -109,6 +113,12 @@ function parseArgs(argv: string[]): CliOptions {
       case '--max-file-size':
         opts.maxFileSize = Math.max(0, parseInt(next(), 10) || 0);
         break;
+      case '--baseline':
+        opts.baselinePath = next();
+        break;
+      case '--update-baseline':
+        opts.updateBaseline = true;
+        break;
       default:
         if (a.startsWith('-')) {
           throw new Error(`unknown flag: ${a}`);
@@ -137,8 +147,12 @@ function printHelp(): void {
     '  --include <glob,glob,...>     additional file-path substrings to include\n' +
     '  --exclude <glob,glob,...>     additional file-path substrings to exclude\n' +
     '  --max-file-size <bytes>       skip files larger than this (default: 500000)\n' +
+    '  --baseline <file>             suppress findings listed in baseline; only NEW\n' +
+    '                                findings above the baseline count gate the build\n' +
+    '  --update-baseline             regenerate <baseline> to match the current scan,\n' +
+    '                                then exit 0. Use after an intentional rule change.\n' +
     '\n' +
-    'Exit codes: 0 = clean, 1 = findings at/above threshold, 2 = scan failed\n'
+    'Exit codes: 0 = clean (or baselined), 1 = new findings above threshold, 2 = scan failed\n'
   );
 }
 
@@ -584,18 +598,71 @@ async function main(): Promise<void> {
     }
   }
 
-  // Summarise to stderr so piping --format=sarif works
   const totalIssues = results.reduce((n, r) => n + r.issues.length, 0);
-  process.stderr.write(
-    `caspian-scan: scanned ${files.length} file(s), ${filesSkipped} skipped, ${totalIssues} finding(s)\n`
-  );
+
+  // --update-baseline: write the current findings as the new baseline and exit.
+  if (opts.updateBaseline) {
+    if (!opts.baselinePath) {
+      process.stderr.write('caspian-scan: --update-baseline requires --baseline <file>\n');
+      process.exit(2);
+    }
+    const flat = results.flatMap(r => r.issues.map(i => ({ ...i, filePath: r.relativePath })));
+    const fresh = buildBaseline(flat, resolveVersion());
+    writeBaseline(opts.baselinePath, fresh);
+    process.stderr.write(
+      `caspian-scan: wrote baseline with ${totalIssues} suppressed finding(s) to ${opts.baselinePath}\n`
+    );
+    process.exit(0);
+  }
+
+  // Apply baseline if present.
+  let newCount = totalIssues;
+  let baselinedCount = 0;
+  let resultsForOutput = results;
+  if (opts.baselinePath) {
+    let baseline: Baseline;
+    try {
+      baseline = loadBaseline(opts.baselinePath);
+    } catch (err: any) {
+      process.stderr.write(`caspian-scan: ${err.message}\n`);
+      process.exit(2);
+    }
+    const flat = results.flatMap(r => r.issues.map(i => ({ ...i, filePath: r.relativePath })));
+    const applied = applyBaseline(flat, baseline);
+    baselinedCount = applied.baselined.length;
+    newCount = applied.newFindings.length;
+    // Rebuild FileResult[] from just the new findings so output formats see
+    // only what gates the build.
+    const byFile = new Map<string, FileResult>();
+    for (const src of results) {
+      byFile.set(src.filePath, { ...src, issues: [] });
+    }
+    for (const n of applied.newFindings) {
+      // n.filePath is relativePath; look up the FileResult by relativePath.
+      const target = Array.from(byFile.values()).find(r => r.relativePath === n.filePath);
+      if (target) { target.issues.push(n); }
+    }
+    resultsForOutput = Array.from(byFile.values()).filter(r => r.issues.length > 0);
+  }
+
+  // Summarise to stderr so piping --format=sarif works.
+  if (opts.baselinePath) {
+    process.stderr.write(
+      `caspian-scan: scanned ${files.length} file(s), ${filesSkipped} skipped, ` +
+      `${totalIssues} finding(s) (${baselinedCount} baselined, ${newCount} new)\n`
+    );
+  } else {
+    process.stderr.write(
+      `caspian-scan: scanned ${files.length} file(s), ${filesSkipped} skipped, ${totalIssues} finding(s)\n`
+    );
+  }
 
   let output: string;
   switch (opts.format) {
-    case 'json': output = toJSONOutput(results); break;
-    case 'text': output = toText(results); break;
+    case 'json': output = toJSONOutput(resultsForOutput); break;
+    case 'text': output = toText(resultsForOutput); break;
     case 'sarif':
-    default: output = toSARIF(results, resolveVersion());
+    default: output = toSARIF(resultsForOutput, resolveVersion());
   }
 
   if (opts.output) {
@@ -604,7 +671,7 @@ async function main(): Promise<void> {
     process.stdout.write(output + '\n');
   }
 
-  process.exit(meetsFailThreshold(worstSeverity(results), opts.failOn) ? 1 : 0);
+  process.exit(meetsFailThreshold(worstSeverity(resultsForOutput), opts.failOn) ? 1 : 0);
 }
 
 main().catch((err: Error) => {
