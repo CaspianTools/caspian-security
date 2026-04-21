@@ -33,7 +33,23 @@ npm install -g caspian-security
 caspian-scan .                       # main scanner, emits SARIF / JSON / text
 caspian-git-history-scan .           # walk git history for leaked secrets
 caspian-check-updates                # npm audit + stack version checks
+caspian-mcp                          # MCP server (stdio) for Claude Desktop / Cursor / etc.
 ```
+
+### As an MCP server (Claude Desktop, Cursor, any MCP client)
+
+```json
+{
+  "mcpServers": {
+    "caspian-security": {
+      "command": "npx",
+      "args": ["-y", "caspian-security", "caspian-mcp"]
+    }
+  }
+}
+```
+
+Gives the assistant four tools: `scan`, `scan_git_history`, `list_rules`, `explain_rule`. See [BUILD.md §3c](BUILD.md) for full client configuration.
 
 ### In GitHub Actions
 

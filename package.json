@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/Caspian-Explorer/caspian-security"
   },
-  "version": "10.3.0",
+  "version": "10.4.0",
   "publisher": "CaspianTools",
   "license": "MIT",
   "engines": {
@@ -48,7 +48,8 @@
   "bin": {
     "caspian-scan": "./out/cli/scan.js",
     "caspian-git-history-scan": "./out/cli/gitHistoryScan.js",
-    "caspian-check-updates": "./out/cli/checkUpdates.js"
+    "caspian-check-updates": "./out/cli/checkUpdates.js",
+    "caspian-mcp": "./out/cli/mcpServer.js"
   },
   "files": [
     "out/",
@@ -564,6 +565,7 @@
     "scan": "npm run compile && node out/cli/scan.js",
     "self-scan": "npm run compile && node out/cli/scan.js . --format text --fail-on error --exclude out,node_modules,.git,coverage",
     "scan-git-history": "npm run compile && node out/cli/gitHistoryScan.js",
+    "mcp-server": "npm run compile && node out/cli/mcpServer.js",
     "publish:vscode": "vsce publish",
     "publish:openvsx": "ovsx publish",
     "publish:npm": "npm run compile && npm publish --access public"
@@ -580,5 +582,8 @@
     "ts-jest": "^29.4.6",
     "tslib": "^2.8.1",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0"
   }
 }

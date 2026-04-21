@@ -4,6 +4,34 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [10.4.0] - 2026-04-21
+
+Caspian is now a Model Context Protocol server. Any MCP client — Claude Desktop, Cursor, Zed, Cline — can call scans directly from tool use. "Use Caspian to scan this repo" goes from four-step manual flow to one-line prompt.
+
+### Added
+
+- **MCP server** ([src/cli/mcpServer.ts](src/cli/mcpServer.ts)) exposing four tools over stdio:
+  - `scan` — workspace scan with optional severity filter and max-findings truncation; returns categorised summary + findings as JSON.
+  - `scan_git_history` — spawns the existing git-history scanner and parses its JSON output.
+  - `list_rules` — rule catalogue with optional category filter.
+  - `explain_rule` — full description + suggestion + context-awareness / file-pattern metadata for a given rule code.
+- **New bin entry** `caspian-mcp` alongside the existing `caspian-scan`, `caspian-git-history-scan`, `caspian-check-updates`. Launched via `npx caspian-security caspian-mcp` or globally.
+- **[src/scanRunner.ts](src/scanRunner.ts)** — workspace-scan logic extracted so both the CLI and the MCP server share one implementation. `walkFiles()`, `resolveLanguage()`, `scanFile()`, and a new `runWorkspaceScan()` wrapper. No I/O concerns beyond `fs.readFileSync` — caller chooses the output format.
+- **12 new unit tests** ([src/__tests__/mcpServer.test.ts](src/__tests__/mcpServer.test.ts)) exercising the four handlers + the dispatch layer directly. Smoke-verified end-to-end: `initialize` + `tools/list` over real stdio returns the tool catalogue.
+- **Runtime dep: `@modelcontextprotocol/sdk` ^1.29.0.** First non-devDependency runtime dep on the project, but the SDK ships both ESM and CJS entries so it threads cleanly into our CommonJS build.
+
+### Changed
+
+- **[BUILD.md](BUILD.md) §3c** — Claude Desktop + Cursor wiring instructions with copy-pasteable `mcpServers` config.
+- **[README.md](README.md) Install section** — adds the MCP block alongside VS Code, npm, and GitHub Actions paths.
+- Test suite: **977 → 989** (+12 MCP handler tests). Rules unchanged at 295+.
+
+### Security notes
+
+- The MCP server is **stdio-only** — no network port, no auth tokens, no telemetry.
+- Each tool call validates the `path` argument exists and is a directory before scanning.
+- The `scan_git_history` tool is guarded by a `.git` directory check and respects the same 100 ms/file taint deadline and 3 s/file rule deadline as every other scan path.
+
 ## [10.3.0] - 2026-04-21
 
 PR-scope scanning. Pair it with v10.1's baseline and your monorepo PR CI stops being a full-repo scan.

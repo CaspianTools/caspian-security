@@ -382,6 +382,39 @@ In the GitHub Action:
     baseline: .caspian-baseline.json    # committed at repo root
 ```
 
+### 3c. MCP server — use Caspian from Claude Desktop, Cursor, any MCP client
+
+Caspian ships an MCP (Model Context Protocol) server so any MCP-aware
+client can call scans directly from tool use. The server exposes four
+tools: `scan`, `scan_git_history`, `list_rules`, `explain_rule`. No
+configuration needed beyond pointing the client at the bin.
+
+**Claude Desktop** — add to `~/Library/Application Support/Claude/claude_desktop_config.json`
+(macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+
+```json
+{
+  "mcpServers": {
+    "caspian-security": {
+      "command": "npx",
+      "args": ["-y", "caspian-security", "caspian-mcp"]
+    }
+  }
+}
+```
+
+**Cursor** — same config shape under `~/.cursor/mcp.json` or the IDE's
+MCP settings panel. Cursor respects the standard MCP client spec.
+
+**Zed, Cline, and other MCP clients** — point them at the `caspian-mcp`
+binary. Transport is stdio; no network port is opened. The server has no
+telemetry and no persistent state — it's a thin wrapper over the same
+scanRunner the CLI uses.
+
+Example prompt once wired in: *"Use Caspian to scan /path/to/my/repo for
+security issues, focusing on Error-severity findings."* The client calls
+the `scan` tool with the appropriate arguments and receives JSON back.
+
 ### 3b. PR-scope scanning with `--changed-since`
 
 On a large monorepo, scanning everything on every PR is waste. Caspian
