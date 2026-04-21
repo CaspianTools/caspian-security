@@ -265,9 +265,13 @@ code --install-extension caspian-security-7.1.0.vsix
 
 ## Publishing
 
-Caspian ships to two registries. Publish to both for every release — the VS
-Code Marketplace reaches VS Code users; Open VSX reaches Cursor, Windsurf,
-VSCodium, and other VS Code derivatives.
+Caspian ships to **three** registries. Publish to all three for every release:
+
+| Registry | Audience | Channel |
+|---|---|---|
+| VS Code Marketplace | VS Code users | VSIX extension |
+| Open VSX | Cursor, Windsurf, VSCodium, other VS Code derivatives | VSIX extension |
+| npm registry | Any CI pipeline, any OS, any editor | CLI via `npx` or global install |
 
 ### 1. VS Code Marketplace
 
@@ -283,9 +287,45 @@ VSCodium, and other VS Code derivatives.
 3. Export it: `export OVSX_PAT=<token>`
 4. Publish: `npm run publish:openvsx` (alias for `ovsx publish`).
 
-The npm scripts read from the same compiled VSIX, so both marketplaces
-ship identical bits. Tag the git release only once and push to both from
-there.
+### 3. npm registry
+
+The same repo is published to npm as a CLI package. Users can run `npx
+caspian-scan .` anywhere — no cloning, no GitHub Action required.
+
+1. Create an npm account at <https://www.npmjs.com> if you don't have one.
+2. Log in once: `npm login` (expects your npm username + password + OTP).
+3. Publish: `npm run publish:npm` (alias for `npm publish --access public`).
+   The script compiles TypeScript first, then runs `npm publish`. Only the
+   files listed under `"files"` in `package.json` are included (`out/`,
+   icon, LICENSE, README, CHANGELOG, SECURITY, THREAT_MODEL) — no `src/`,
+   no tests, no VSIX artefacts.
+
+The npm package exposes three bin commands, matching the scripts in this
+repo:
+
+- `caspian-scan` — the main SARIF scanner.
+- `caspian-git-history-scan` — secret scanner for git history.
+- `caspian-check-updates` — dependency audit / CVE check.
+
+After publishing, anyone can:
+
+```bash
+npx caspian-security scan .
+# or, installed globally:
+npm install -g caspian-security
+caspian-scan .
+caspian-git-history-scan .
+```
+
+All three distributions ship from the same compiled `out/` tree, so the
+rule engine, taint engine, CLI flags, and baseline support are identical
+across channels. Tag the git release once and push to all three
+registries from there.
+
+**Note on `require()`:** the npm package's `main` field points at the VS
+Code extension entry, which imports `vscode`. Don't do `const caspian =
+require('caspian-security')` in a Node script — it will fail to resolve
+`vscode`. Use the bin commands or spawn them as subprocesses.
 
 ### 3. CLI mode and CI scanning
 

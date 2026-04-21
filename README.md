@@ -6,9 +6,46 @@ Context-aware security analysis for Visual Studio Code.
 
 ## Overview
 
-Caspian Security is a VS Code extension that detects vulnerabilities, insecure coding patterns, and security best practice violations as you write code. It provides **164 security rules** across **14 categories**, covering SQL injection, XSS, hardcoded secrets, business logic flaws, and more.
+Caspian Security detects vulnerabilities, insecure coding patterns, and security best-practice violations across code AND infrastructure (Dockerfile, Terraform, Kubernetes YAML). It ships as a **VS Code extension** for inline feedback and as an **npm-installable CLI** for CI pipelines — both backed by the same 295+ rule engine, intra-file taint tracking, and provider-prefix secret detection.
 
-What sets it apart: **context-aware intelligence**. The scanner classifies detected issues with confidence scores (Critical, Safe, or Verify Needed) based on variable-source analysis. AI-powered fixes understand the full function scope and variable definitions -- not just the error line. Teams can share ignore decisions via `.caspianignore`, and scan results export to **SARIF v2.1.0** for direct upload to GitHub Security Alerts.
+What sets it apart: **context-aware intelligence**. The scanner classifies issues with confidence scores based on variable-source analysis, follows user input through function bodies to flag real dataflow bugs, and its AI fixes work on a per-invocation consent model with minimal-context default — no full file contents leave your workspace unless you opt in.
+
+---
+
+## Install
+
+### In VS Code
+
+```
+code --install-extension CaspianTools.caspian-security
+```
+
+Or search "Caspian Security" in the Extensions sidebar. Also available on [Open VSX](https://open-vsx.org) for Cursor, Windsurf, and VSCodium users.
+
+### Via npm (for CI, scripts, any editor)
+
+```bash
+# One-off, zero install
+npx caspian-security caspian-scan . --format sarif --fail-on error
+
+# Or install globally
+npm install -g caspian-security
+caspian-scan .                       # main scanner, emits SARIF / JSON / text
+caspian-git-history-scan .           # walk git history for leaked secrets
+caspian-check-updates                # npm audit + stack version checks
+```
+
+### In GitHub Actions
+
+```yaml
+- uses: Caspian-Explorer/caspian-security/.github/actions/scan@v10.2.0
+  with:
+    path: .
+    fail-on: error
+    baseline: .caspian-baseline.json   # optional: suppress known findings
+```
+
+Findings land in the GitHub Security tab automatically. The npm CLI and the extension use the same rule engine — SARIF output is identical across channels.
 
 ---
 

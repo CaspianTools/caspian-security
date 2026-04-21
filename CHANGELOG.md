@@ -4,6 +4,27 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [10.2.0] - 2026-04-21
+
+Caspian is now installable from **three** registries: VS Code Marketplace, Open VSX, and **npm**. The same rule engine reaches every developer — IDE, CLI, CI — through the channel most natural for their workflow.
+
+### Added
+
+- **npm distribution.** Same package, same name (`caspian-security`), same source tree. `npm install -g caspian-security` / `npx caspian-security caspian-scan .` / `npm install --save-dev caspian-security`. No more "clone the repo first" friction for non-GitHub CI pipelines (GitLab, CircleCI, Jenkins, Drone, BuildKite all work out of the box).
+- **Three `bin` commands** — `caspian-scan` (main SARIF scanner), `caspian-git-history-scan` (secret scanner for git log), `caspian-check-updates` (dependency audit). All three read the CLI shebang that's already present in source.
+- **`files` field** scoped tightly — only `out/`, LICENSE, README, CHANGELOG, SECURITY, THREAT_MODEL, and icon ship to npm. No source tree, no tests, no `.vsix` artefacts.
+- **`npm run publish:npm`** script (runs `npm run compile` first, then `npm publish --access public`). Matches the existing `publish:vscode` + `publish:openvsx` pattern so all three registries publish from the same compiled bits.
+
+### Changed
+
+- **[BUILD.md](BUILD.md) publishing section** — rewritten around a three-registry table. Each channel gets its own auth / publish walkthrough. Documents that `require('caspian-security')` isn't supported (the `main` field points at the VS Code extension entry which needs `vscode`); use the bin commands instead.
+- **[README.md](README.md)** — new "Install" section near the top covers VS Code / Open VSX / npm / GitHub Actions side by side. Overview copy updated to reflect the current scope (295+ rules, IaC + code, taint tracking, per-invocation consent default).
+
+### Notes
+
+- **Same rule engine, same SARIF, same baseline format** across all three channels. The extension's diagnostics, the CLI's SARIF output, and the Action's uploaded results are indistinguishable once you've stripped the UI chrome.
+- Publishing to npm requires a maintainer `npm login` + OTP. The script is in place; actually pushing to the registry is a one-time action the owner runs when ready.
+
 ## [10.1.0] - 2026-04-21
 
 The adoption-killer feature: **baseline / suppression file support**. Drop Caspian into any existing codebase without a big-bang remediation.
