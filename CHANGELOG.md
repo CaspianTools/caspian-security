@@ -4,6 +4,43 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [10.3.0] - 2026-04-21
+
+PR-scope scanning. Pair it with v10.1's baseline and your monorepo PR CI stops being a full-repo scan.
+
+### Added
+
+- **`--changed-since <ref>` CLI flag.** Restricts the scan to files that differ from the ref in a `<ref>...HEAD` diff. Three-dot semantics means "everything this branch adds since diverging from <ref>", not "everything different from <ref> right now" — so newer commits on the base branch don't pollute the set. `--diff-filter=d` excludes deletions (nothing to scan).
+- **[src/gitDiff.ts](src/gitDiff.ts)** — `getChangedFilesSince(workspace, ref)` shells out to `git` via `spawnSync` and returns a Set of absolute paths. Clear error messages for missing ref, non-git repo, or git-not-installed.
+- **GitHub Action `changed-since` input** — threads through to the CLI. Paired with `actions/checkout@v4 fetch-depth: 0` so the base ref resolves.
+- **4 new unit tests** ([src/__tests__/gitDiff.test.ts](src/__tests__/gitDiff.test.ts)) covering: empty diff, absolute-path output, non-existent ref error, non-git-directory error. Shallow-clone tolerant.
+
+### Why three-dot diff
+
+`--changed-since origin/main` under two-dot semantics (`origin/main..HEAD`) would give the same files as three-dot in the common case — but if `origin/main` has moved forward since this branch diverged, two-dot includes files on `origin/main` that this branch never touched. Three-dot (`origin/main...HEAD`) uses the merge-base, which is what PR review UIs show. Caspian follows the PR-review convention.
+
+### Example — monorepo CI workflow
+
+```yaml
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0
+
+- uses: Caspian-Explorer/caspian-security/.github/actions/scan@v10.3.0
+  with:
+    baseline: .caspian-baseline.json
+    changed-since: ${{ github.event.pull_request.base.sha }}
+    fail-on: error
+```
+
+Result: full-repo scans measured in minutes collapse to seconds on typical PRs. The baseline handles the legacy backlog; `--changed-since` handles the review velocity.
+
+### Changed
+
+- CLI `--help` text documents `--changed-since`.
+- [BUILD.md](BUILD.md) gains Section 3b — "PR-scope scanning with `--changed-since`".
+- Test suite: **973 → 977** (+4 gitDiff). Rules unchanged at 295+.
+
 ## [10.2.0] - 2026-04-21
 
 Caspian is now installable from **three** registries: VS Code Marketplace, Open VSX, and **npm**. The same rule engine reaches every developer — IDE, CLI, CI — through the channel most natural for their workflow.

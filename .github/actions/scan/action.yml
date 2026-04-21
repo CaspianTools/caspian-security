@@ -42,6 +42,15 @@ inputs:
       Caspian into existing codebases without a big-bang remediation.
     required: false
     default: ''
+  changed-since:
+    description: >-
+      Git ref to diff against (e.g. `origin/main`,
+      `${{ github.event.pull_request.base.sha }}`). When set, Caspian only
+      scans files that differ from that ref in a `<ref>...HEAD` diff —
+      turning a full-repo scan into a PR-scoped one. Pair with
+      actions/checkout@v4 `fetch-depth: 0` so the ref is available.
+    required: false
+    default: ''
   upload-sarif:
     description: 'If true, upload the SARIF file to GitHub Code Scanning using github/codeql-action/upload-sarif@v3.'
     required: false
@@ -88,7 +97,8 @@ runs:
           --max-file-size "${{ inputs.max-file-size }}" \
           ${{ inputs.include && format('--include "{0}"', inputs.include) || '' }} \
           ${{ inputs.exclude && format('--exclude "{0}"', inputs.exclude) || '' }} \
-          ${{ inputs.baseline && format('--baseline "{0}"', inputs.baseline) || '' }}
+          ${{ inputs.baseline && format('--baseline "{0}"', inputs.baseline) || '' }} \
+          ${{ inputs.changed-since && format('--changed-since "{0}"', inputs.changed-since) || '' }}
         echo "CASPIAN_EXIT=$?" >> "$GITHUB_ENV"
 
     - name: Upload SARIF to Code Scanning

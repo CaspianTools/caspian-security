@@ -375,11 +375,49 @@ artefact.
 In the GitHub Action:
 
 ```yaml
-- uses: Caspian-Explorer/caspian-security/.github/actions/scan@v10.1.0
+- uses: Caspian-Explorer/caspian-security/.github/actions/scan@v10.3.0
   with:
     path: .
     fail-on: error
     baseline: .caspian-baseline.json    # committed at repo root
+```
+
+### 3b. PR-scope scanning with `--changed-since`
+
+On a large monorepo, scanning everything on every PR is waste. Caspian
+can restrict the scan to just the files this branch adds on top of main:
+
+```bash
+# Local: scan only what this branch adds since it forked from main
+node out/cli/scan.js . --changed-since origin/main --fail-on error
+
+# CI — the usual PR recipe
+node out/cli/scan.js . --changed-since "$GITHUB_BASE_SHA" --fail-on error
+```
+
+Semantics match `git diff --name-only --diff-filter=d <ref>...HEAD`:
+three-dot syntax means "everything on this branch since diverging from
+<ref>", not "everything different from <ref> right now". Deletions are
+excluded. Working-tree / untracked files are NOT included — this is the
+PR-scope set, not the dirty-tree set.
+
+Pairs naturally with `--baseline`: adopt Caspian with a baseline, then
+flip PR CI to `--changed-since` so new findings are caught fast, while
+the baseline takes care of the legacy backlog.
+
+In the GitHub Action:
+
+```yaml
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0                      # so the base ref resolves
+
+- uses: Caspian-Explorer/caspian-security/.github/actions/scan@v10.3.0
+  with:
+    path: .
+    fail-on: error
+    baseline: .caspian-baseline.json
+    changed-since: ${{ github.event.pull_request.base.sha }}
 ```
 
 ### 4. VSIX signing (planned)

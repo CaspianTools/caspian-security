@@ -42,6 +42,7 @@ import { isGeneratedFile } from '../generatedFileDetector';
 import { buildLineStates, isInsideComment, isInsideStringContent } from '../scanContext';
 import { runTaintAnalysis } from '../taint';
 import { loadBaseline, buildBaseline, writeBaseline, applyBaseline, Baseline } from '../baseline';
+import { getChangedFilesSince } from '../gitDiff';
 
 // --- CLI argument parsing -------------------------------------------------
 
@@ -55,6 +56,7 @@ interface CliOptions {
   maxFileSize: number;
   baselinePath?: string;
   updateBaseline: boolean;
+  changedSince?: string;
 }
 
 function parseArgs(argv: string[]): CliOptions {
@@ -119,6 +121,9 @@ function parseArgs(argv: string[]): CliOptions {
       case '--update-baseline':
         opts.updateBaseline = true;
         break;
+      case '--changed-since':
+        opts.changedSince = next();
+        break;
       default:
         if (a.startsWith('-')) {
           throw new Error(`unknown flag: ${a}`);
@@ -151,6 +156,9 @@ function printHelp(): void {
     '                                findings above the baseline count gate the build\n' +
     '  --update-baseline             regenerate <baseline> to match the current scan,\n' +
     '                                then exit 0. Use after an intentional rule change.\n' +
+    '  --changed-since <ref>         only scan files that differ from <ref> in a\n' +
+    '                                `<ref>...HEAD` diff. Ideal for PR CI:\n' +
+    '                                --changed-since origin/main. Excludes deletions.\n' +
     '\n' +
     'Exit codes: 0 = clean (or baselined), 1 = new findings above threshold, 2 = scan failed\n'
   );
@@ -566,7 +574,27 @@ async function main(): Promise<void> {
   }
 
   const rules = getAllRules();
-  const files = walkFiles(opts.workspace, opts.exclude, opts.include);
+  let files = walkFiles(opts.workspace, opts.exclude, opts.include);
+
+  // --changed-since: restrict the file set to what differs from the given
+  // ref. Resolve before the scan loop so the "scanned N file(s)" counter
+  // reflects the PR-scoped universe, not the full repo.
+  let changedSinceNote = '';
+  if (opts.changedSince) {
+    let changed: ReturnType<typeof getChangedFilesSince>;
+    try {
+      changed = getChangedFilesSince(opts.workspace, opts.changedSince);
+    } catch (err: any) {
+      process.stderr.write(`caspian-scan: ${err.message}\n`);
+      process.exit(2);
+      return; // unreachable but TS needs the narrowing
+    }
+    const before = files.length;
+    files = files.filter(f => changed.files.has(f));
+    changedSinceNote =
+      ` (PR-scope: ${changed.diffCount} changed file(s) vs ${changed.ref}, ` +
+      `${files.length}/${before} scannable)`;
+  }
 
   const results: FileResult[] = [];
   let filesSkipped = 0;
@@ -648,12 +676,12 @@ async function main(): Promise<void> {
   // Summarise to stderr so piping --format=sarif works.
   if (opts.baselinePath) {
     process.stderr.write(
-      `caspian-scan: scanned ${files.length} file(s), ${filesSkipped} skipped, ` +
+      `caspian-scan: scanned ${files.length} file(s)${changedSinceNote}, ${filesSkipped} skipped, ` +
       `${totalIssues} finding(s) (${baselinedCount} baselined, ${newCount} new)\n`
     );
   } else {
     process.stderr.write(
-      `caspian-scan: scanned ${files.length} file(s), ${filesSkipped} skipped, ${totalIssues} finding(s)\n`
+      `caspian-scan: scanned ${files.length} file(s)${changedSinceNote}, ${filesSkipped} skipped, ${totalIssues} finding(s)\n`
     );
   }
 
