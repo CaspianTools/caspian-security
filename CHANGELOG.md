@@ -4,6 +4,26 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [9.3.0] - 2026-04-21
+
+Phase 1 improvements: CI-native workflow, provider-prefix secret detection, trust-signal documentation. No behaviour change to the VS Code extension itself beyond 28 new rules; big additions live off the extension (CLI, Action, docs).
+
+### Added
+
+- **28 provider-prefix secret rules (`TOKEN001`–`TOKEN028`).** Each pattern matches a specific vendor's token shape — Anthropic, OpenAI, Slack, Google API/OAuth, Stripe, Twilio, SendGrid, Mailgun, npm, Docker Hub, Shopify, Notion, Linear, Figma, Databricks, Hugging Face, Discord (bot + webhook), Bitbucket, Atlassian, DigitalOcean, Sentry, Postman, Pulumi, Square, GitLab runner, and HTTP basic-auth credentials embedded in URLs. Stripe live vs test, Discord bot vs webhook are split so severity matches impact. Every pattern is ReDoS-safe (build-time verified).
+- **CLI scanner (`out/cli/scan.js`).** Runs the same rule set headlessly; emits SARIF 2.1, JSON, or plain text. Supports `--fail-on error|warning|info|never`, `--include`, `--exclude`, `--max-file-size`, `--output`. Mirrors the extension's Informational-cap and context-aware semantics. Exit codes are CI-friendly (0 = clean, 1 = threshold hit, 2 = scan crashed).
+- **npm scripts:** `npm run scan`, `npm run self-scan`, `npm run publish:vscode`, `npm run publish:openvsx`.
+- **Reusable GitHub Action** at [`.github/actions/scan/action.yml`](.github/actions/scan/action.yml). Consumers add `uses: Caspian-Explorer/caspian-security/.github/actions/scan@v9.3.0` and get a full SARIF-upload pipeline with no extra boilerplate. Copy-pasteable downstream example at [`.github/examples/caspian-scan.yml`](.github/examples/caspian-scan.yml).
+- **Self-scan CI workflow** at [`.github/workflows/self-scan.yml`](.github/workflows/self-scan.yml). Caspian runs the CLI against its own source on every push / PR and uploads SARIF to the Security tab. Build fails on any Error-severity regression.
+- **[SECURITY.md](SECURITY.md)** — coordinated-disclosure policy with GitHub Private Vulnerability Reporting link, triage SLAs per severity, in-scope / out-of-scope lists.
+- **[THREAT_MODEL.md](THREAT_MODEL.md)** — assets, trust boundaries, adversaries (hostile workspace / supply chain / local process / network / compromised LLM / malicious webview), mitigations tied to file:line references, and known residual risks.
+- **Open VSX publishing path.** `ovsx` devDependency installed; `npm run publish:openvsx` publishes from the same VSIX that goes to the VS Code Marketplace, reaching Cursor / Windsurf / VSCodium users.
+
+### Changed
+
+- `package.json` `description` refreshed to reflect the new rule count (192) and the CI / CLI / Open VSX story.
+- [BUILD.md](BUILD.md) publishing section rewritten: VS Code Marketplace + Open VSX side-by-side, CLI usage, Action usage, and a placeholder for upcoming VSIX publisher signing.
+
 ## [9.2.0] - 2026-04-20
 
 Security-hardening release. This version fixes nine self-audit findings affecting the extension's own data-flow, webview, and storage surface. No new scan rules; no functional regressions expected. All changes are defence-in-depth; no known in-the-wild exploitation.

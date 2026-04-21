@@ -1,0 +1,102 @@
+name: 'Caspian Security Scan'
+description: 'Run the Caspian Security static analyzer and emit SARIF for GitHub Code Scanning.'
+author: 'Caspian-Explorer'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  path:
+    description: 'Workspace path to scan. Defaults to the repository root.'
+    required: false
+    default: '.'
+  output:
+    description: 'Path to write SARIF output to.'
+    required: false
+    default: 'caspian-scan.sarif'
+  format:
+    description: 'Output format: sarif | json | text. Defaults to sarif.'
+    required: false
+    default: 'sarif'
+  fail-on:
+    description: 'Minimum severity that causes a non-zero exit. error | warning | info | never. Defaults to error.'
+    required: false
+    default: 'error'
+  include:
+    description: 'Comma-separated extra file-path substrings to include.'
+    required: false
+    default: ''
+  exclude:
+    description: 'Comma-separated extra file-path substrings to exclude (appended to the built-in exclude list).'
+    required: false
+    default: 'out,node_modules,.git,coverage,dist,build'
+  max-file-size:
+    description: 'Skip files larger than this many bytes.'
+    required: false
+    default: '500000'
+  upload-sarif:
+    description: 'If true, upload the SARIF file to GitHub Code Scanning using github/codeql-action/upload-sarif@v3.'
+    required: false
+    default: 'true'
+
+outputs:
+  sarif-file:
+    description: 'Path to the SARIF file that was written.'
+    value: ${{ inputs.output }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    # CASPIAN_ROOT points at the checkout of the caspian-security repo that
+    # GitHub provides when the workflow references this action via
+    # `uses: Caspian-Explorer/caspian-security/.github/actions/scan@<ref>`.
+    # The action's own path is `<checkout>/.github/actions/scan`, so
+    # `../../..` resolves back to the caspian-security root.
+    - name: Install Caspian dependencies
+      shell: bash
+      run: |
+        CASPIAN_ROOT="$GITHUB_ACTION_PATH/../../.."
+        echo "CASPIAN_ROOT=$CASPIAN_ROOT" >> "$GITHUB_ENV"
+        npm --prefix "$CASPIAN_ROOT" ci
+
+    - name: Compile Caspian
+      shell: bash
+      run: npm --prefix "$CASPIAN_ROOT" run compile
+
+    - name: Run Caspian scan
+      shell: bash
+      run: |
+        set +e
+        node "$CASPIAN_ROOT/out/cli/scan.js" \
+          "${{ inputs.path }}" \
+          --format "${{ inputs.format }}" \
+          --output "${{ inputs.output }}" \
+          --fail-on "${{ inputs.fail-on }}" \
+          --max-file-size "${{ inputs.max-file-size }}" \
+          ${{ inputs.include && format('--include "{0}"', inputs.include) || '' }} \
+          ${{ inputs.exclude && format('--exclude "{0}"', inputs.exclude) || '' }}
+        echo "CASPIAN_EXIT=$?" >> "$GITHUB_ENV"
+
+    - name: Upload SARIF to Code Scanning
+      if: ${{ inputs.upload-sarif == 'true' && inputs.format == 'sarif' }}
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ inputs.output }}
+        category: caspian-security
+
+    # Propagate the scanner's exit code AFTER the SARIF upload so findings are
+    # still visible in the Security tab even if the build fails.
+    - name: Enforce fail-on threshold
+      shell: bash
+      run: |
+        if [ "${CASPIAN_EXIT:-0}" = "0" ]; then
+          echo "Caspian scan passed the '${{ inputs.fail-on }}' threshold."
+          exit 0
+        fi
+        echo "Caspian scan found findings at or above the '${{ inputs.fail-on }}' threshold (exit $CASPIAN_EXIT)."
+        exit "$CASPIAN_EXIT"

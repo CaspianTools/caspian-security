@@ -1,13 +1,13 @@
 {
   "name": "caspian-security",
   "displayName": "Caspian Security",
-  "description": "Context-aware security analysis for VS Code — 164 rules, AI fixes with minimal-context consent flow, hardened webview (CSP + command allow-list), security score, triage mode, PR-scoped scanning, test suite, and CI pipeline",
+  "description": "Context-aware security analysis for VS Code — 192 rules (incl. 28 provider-prefix secret detectors), AI fixes with minimal-context consent flow, hardened webview, reusable GitHub Action with SARIF upload, CLI scanner, signed Open VSX release",
   "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Caspian-Explorer/caspian-security"
   },
-  "version": "9.2.0",
+  "version": "9.3.0",
   "publisher": "CaspianTools",
   "license": "MIT",
   "engines": {
@@ -541,7 +541,11 @@
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
     "test": "jest --forceExit",
-    "check-updates": "npm run compile && node out/cli/checkUpdates.js"
+    "check-updates": "npm run compile && node out/cli/checkUpdates.js",
+    "scan": "npm run compile && node out/cli/scan.js",
+    "self-scan": "npm run compile && node out/cli/scan.js . --format text --fail-on error --exclude out,node_modules,.git,coverage",
+    "publish:vscode": "vsce publish",
+    "publish:openvsx": "ovsx publish"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
@@ -551,7 +555,9 @@
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.0.0",
     "jest": "^30.3.0",
+    "ovsx": "^0.10.11",
     "ts-jest": "^29.4.6",
+    "tslib": "^2.8.1",
     "typescript": "^5.0.0"
   }
 }

@@ -263,18 +263,62 @@ code --install-extension caspian-security-7.1.0.vsix
 
 ---
 
-## Publishing to Marketplace
+## Publishing
 
-1. Create Azure DevOps account (required by marketplace)
-2. Create Personal Access Token
-3. Login:
-   ```bash
-   vsce login Caspian-Explorer
-   ```
-4. Publish:
-   ```bash
-   vsce publish
-   ```
+Caspian ships to two registries. Publish to both for every release — the VS
+Code Marketplace reaches VS Code users; Open VSX reaches Cursor, Windsurf,
+VSCodium, and other VS Code derivatives.
+
+### 1. VS Code Marketplace
+
+1. Create an Azure DevOps account (required by the marketplace).
+2. Generate a Personal Access Token with `Marketplace → Manage` scope.
+3. Log in once: `vsce login Caspian-Explorer`
+4. Publish: `npm run publish:vscode` (alias for `vsce publish`).
+
+### 2. Open VSX
+
+1. Sign in at <https://open-vsx.org> (GitHub OAuth).
+2. Generate an access token in your Open VSX profile.
+3. Export it: `export OVSX_PAT=<token>`
+4. Publish: `npm run publish:openvsx` (alias for `ovsx publish`).
+
+The npm scripts read from the same compiled VSIX, so both marketplaces
+ship identical bits. Tag the git release only once and push to both from
+there.
+
+### 3. CLI mode and CI scanning
+
+Caspian exposes a headless CLI (`out/cli/scan.js`) that runs the same rule
+set as the extension and emits SARIF 2.1. Two npm entry points:
+
+```bash
+npm run scan -- /path/to/project --format sarif --output results.sarif
+npm run self-scan        # runs the CLI against this repo
+```
+
+For GitHub Actions, a reusable composite action is bundled at
+`.github/actions/scan`. Example usage in a downstream repo:
+
+```yaml
+- uses: Caspian-Explorer/caspian-security/.github/actions/scan@v9.3.0
+  with:
+    path: .
+    fail-on: error
+```
+
+The action compiles Caspian on the runner and uploads SARIF to GitHub Code
+Scanning automatically. A copy-pasteable workflow lives at
+`.github/examples/caspian-scan.yml`.
+
+### 4. VSIX signing (planned)
+
+VS Code Marketplace supports publisher signing. We track that work under
+issue [#signing](https://github.com/Caspian-Explorer/caspian-security/issues)
+— once a certificate is provisioned, publishing will gain a
+`--sign-package` flag. In the interim, consumers can verify a published
+VSIX by diffing its SHA-256 against the asset checksum attached to the
+corresponding GitHub Release.
 
 ---
 

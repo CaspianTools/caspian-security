@@ -8,6 +8,7 @@ import { apiSecurityRules } from './apiSecurityRules';
 import { databaseRules } from './databaseRules';
 import { fileHandlingRules } from './fileHandlingRules';
 import { secretsRules } from './secretsRules';
+import { providerSecretsRules } from './providerSecretsRules';
 import { frontendRules } from './frontendRules';
 import { businessLogicRules } from './businessLogicRules';
 import { loggingRules } from './loggingRules';
@@ -33,7 +34,7 @@ const allRulesByCategory: Record<SecurityCategory, SecurityRule[]> = {
   [SecurityCategory.APISecurity]: apiSecurityRules,
   [SecurityCategory.DatabaseSecurity]: [...databaseRules, ...kotlinDatabaseRules],
   [SecurityCategory.FileHandling]: [...fileHandlingRules, ...kotlinFileRules],
-  [SecurityCategory.SecretsCredentials]: [...secretsRules, ...kotlinSecretsRules],
+  [SecurityCategory.SecretsCredentials]: [...secretsRules, ...providerSecretsRules, ...kotlinSecretsRules],
   [SecurityCategory.FrontendSecurity]: frontendRules,
   [SecurityCategory.BusinessLogicPayment]: businessLogicRules,
   [SecurityCategory.LoggingMonitoring]: [...loggingRules, ...kotlinLoggingRules],
