@@ -4,6 +4,16 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [10.5.1] - 2026-05-07
+
+Maintenance release — marketplace re-publish with refreshed `package-lock.json`. No functional changes from 10.5.0.
+
+### Changed
+
+- `package-lock.json` regenerated against current `npm install` to keep the lockfile aligned with the published version.
+
+---
+
 ## [10.5.0] - 2026-04-21
 
 The lightbulb release. Hover on a Caspian finding, press Ctrl+. (or click the yellow lightbulb), and get a deterministic one-click fix for the 13 most common mechanical remediations — no AI round-trip, no waiting on a consent dialog, no spend on provider tokens.
