@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Caspian Security — User Guide (v10.6.1)</title>
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --panel: #1a1a2e;
+    --panel-2: #20203a;
+    --text: #e7e7ef;
+    --muted: #a4a4bd;
+    --accent: #7c9cff;
+    --accent-2: #4ade80;
+    --border: #2c2c48;
+    --code-bg: #14142a;
+    --warn: #fbbf24;
+    --sidebar-w: 280px;
+    --maxw: 900px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Layout */
+  .wrap { display: flex; align-items: flex-start; }
+  nav.toc {
+    position: sticky; top: 0; align-self: flex-start;
+    width: var(--sidebar-w); height: 100vh; overflow-y: auto;
+    background: var(--panel); border-right: 1px solid var(--border);
+    padding: 24px 18px; flex-shrink: 0;
+  }
+  nav.toc .brand { font-weight: 700; font-size: 18px; margin-bottom: 2px; }
+  nav.toc .ver { color: var(--muted); font-size: 12px; margin-bottom: 20px; }
+  nav.toc a { display: block; color: var(--muted); padding: 5px 8px; border-radius: 6px; font-size: 14px; }
+  nav.toc a:hover { background: var(--panel-2); color: var(--text); text-decoration: none; }
+  main { flex: 1; min-width: 0; padding: 40px 48px 120px; }
+  .content { max-width: var(--maxw); margin: 0 auto; }
+
+  /* Header */
+  header.hero { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 36px; }
+  header.hero h1 { font-size: 34px; margin: 0 0 6px; letter-spacing: -0.02em; }
+  header.hero .tagline { color: var(--muted); font-size: 17px; margin: 0; }
+  .badges { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge { background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
+           font-size: 12px; padding: 3px 10px; border-radius: 999px; }
+  .badge strong { color: var(--accent-2); }
+
+  h2 { font-size: 24px; margin: 48px 0 14px; padding-top: 10px; letter-spacing: -0.01em; border-top: 1px solid var(--border); padding-top: 40px; }
+  h2:first-of-type { border-top: 0; padding-top: 0; }
+  h3 { font-size: 18px; margin: 28px 0 10px; color: #dfe3ff; }
+  h4 { font-size: 15px; margin: 20px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  p { margin: 12px 0; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 5px 0; }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  code {
+    background: var(--code-bg); border: 1px solid var(--border);
+    padding: 1.5px 6px; border-radius: 5px; font-size: 13.5px;
+    font-family: "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", monospace;
+    color: #d7dcff;
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; overflow-x: auto; margin: 14px 0;
+  }
+  pre code { background: none; border: 0; padding: 0; font-size: 13px; color: #cdd3f5; line-height: 1.55; }
+
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14.5px; }
+  th, td { text-align: left; padding: 9px 12px; border: 1px solid var(--border); vertical-align: top; }
+  th { background: var(--panel-2); font-weight: 600; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+
+  .callout {
+    border-left: 3px solid var(--accent); background: var(--panel);
+    padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; color: var(--text);
+  }
+  .callout.warn { border-left-color: var(--warn); }
+  .callout.ok { border-left-color: var(--accent-2); }
+  .callout p { margin: 6px 0; }
+  .callout strong { color: #fff; }
+
+  .surface-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 18px 0; }
+  .surface-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .surface-card h4 { margin: 0 0 6px; color: var(--accent); text-transform: none; letter-spacing: 0; font-size: 15px; }
+  .surface-card p { margin: 0; color: var(--muted); font-size: 13.5px; }
+
+  footer { color: var(--muted); font-size: 13px; margin-top: 48px; border-top: 1px solid var(--border); padding-top: 18px; }
+
+  @media (max-width: 820px) {
+    nav.toc { display: none; }
+    main { padding: 28px 20px 80px; }
+    header.hero h1 { font-size: 27px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="toc">
+  <div class="brand">🛡️ Caspian Security</div>
+  <div class="ver">User Guide · v10.6.1</div>
+  <a href="#intro">Overview</a>
+  <a href="#install">1. Installation</a>
+  <a href="#quickstart">2. Quick start</a>
+  <a href="#cli">3. The <code>caspian</code> CLI</a>
+  <a href="#vscode">4. In VS Code</a>
+  <a href="#agents">5. AI agent integration</a>
+  <a href="#cicd">6. CI/CD integration</a>
+  <a href="#config">7. Configuration</a>
+  <a href="#formats">8. Output formats</a>
+  <a href="#rules">9. Rule categories</a>
+  <a href="#severity">10. Severity &amp; confidence</a>
+  <a href="#faq">11. Troubleshooting &amp; FAQ</a>
+  <a href="#cheatsheet">12. Cheat sheet</a>
+</nav>
+
+<main>
+<div class="content">
+
+  <header class="hero" id="intro">
+    <h1>Caspian Security — User Guide</h1>
+    <p class="tagline">Context-aware security scanning for VS Code — and a standalone <code>caspian</code> CLI you can run anywhere.</p>
+    <div class="badges">
+      <span class="badge">Version <strong>10.6.1</strong></span>
+      <span class="badge"><strong>295+</strong> rules</span>
+      <span class="badge"><strong>14</strong> categories</span>
+      <span class="badge">9 languages + IaC</span>
+      <span class="badge">MIT</span>
+    </div>
+    <p style="margin-top:18px">Caspian detects vulnerabilities, insecure patterns, and best-practice violations across <strong>code and infrastructure</strong> — with intra-file taint tracking, provider-prefix secret detection, and a git-history secret scanner. One rule engine powers four surfaces:</p>
+    <div class="surface-grid">
+      <div class="surface-card"><h4>VS Code extension</h4><p>Inline squiggles, quick-fixes, and AI fixes while you code.</p></div>
+      <div class="surface-card"><h4>caspian CLI</h4><p>Scan from any terminal (PowerShell / cmd / bash) — no editor needed.</p></div>
+      <div class="surface-card"><h4>AI agents</h4><p>Claude Code / Cursor / Antigravity run Caspian mid-task.</p></div>
+      <div class="surface-card"><h4>CI/CD</h4><p>Gate merges on new findings via SARIF + exit codes.</p></div>
+    </div>
+  </header>
+
+  <!-- 1 -->
+  <h2 id="install">1. Installation</h2>
+  <p>Caspian ships on three registries with one shared rule engine, so results are identical across channels.</p>
+
+  <h3>VS Code / Cursor / Windsurf / VSCodium</h3>
+  <pre><code>code --install-extension CaspianTools.caspian-security</code></pre>
+  <p>Or search <strong>"Caspian Security"</strong> in the Extensions sidebar. Also on <a href="https://open-vsx.org">Open VSX</a>. From a local file: <code>code --install-extension caspian-security-10.6.1.vsix</code>.</p>
+
+  <h3>Command line (npm)</h3>
+  <pre><code># Zero install — runs the latest published version (any shell)
+npx -y caspian-security caspian scan .
+
+# Or install once and get the `caspian` command everywhere
+npm install -g caspian-security
+caspian --version</code></pre>
+  <div class="callout"><p><strong>Testing a local build?</strong> From a clone, run <code>npm run compile</code> then <code>npm link</code> to expose a global <code>caspian</code> backed by your local build (undo with <code>npm rm -g caspian-security</code>). See <a href="#faq">Troubleshooting</a> if <code>npx</code> returns a 404.</p></div>
+
+  <h3>Verify</h3>
+  <pre><code>caspian --version      # → 10.6.1
+caspian --help         # full command list</code></pre>
+
+  <!-- 2 -->
+  <h2 id="quickstart">2. Quick start</h2>
+  <pre><code># Scan the current project, gate on errors, machine-readable output
+caspian scan . --format json --fail-on error</code></pre>
+  <ul>
+    <li>Prints findings as JSON to stdout.</li>
+    <li><strong>Exit code:</strong> <code>0</code> clean · <code>1</code> finding at/above threshold · <code>2</code> scan failed.</li>
+  </ul>
+  <pre><code>caspian scan . --format text          # human-readable
+caspian snippet --agent claude        # instruction block for an AI agent
+caspian mcp-config --client cursor    # MCP config for a client</code></pre>
+
+  <!-- 3 -->
+  <h2 id="cli">3. The <code>caspian</code> CLI</h2>
+  <p>One unified command fronts every capability. Run any subcommand with <code>--help</code> for its own flags.</p>
+  <pre><code>caspian &lt;command&gt; [options]
+
+  scan [path]           Run the security scanner (SARIF / JSON / text)
+  git-history [path]    Walk git history for leaked secrets
+  check-updates [path]  npm audit + stack version checks
+  mcp                   Start the MCP server (stdio)
+  snippet               Print a paste-ready AI-agent instruction block
+  mcp-config            Print an MCP client config block
+  help                  Show help
+  --version, -v         Print the version</code></pre>
+  <p>The original bins — <code>caspian-scan</code>, <code>caspian-git-history-scan</code>, <code>caspian-check-updates</code>, <code>caspian-mcp</code> — still work unchanged.</p>
+  <div class="callout"><p><strong>Windows:</strong> a global install creates <code>caspian.cmd</code> (cmd.exe) and <code>caspian.ps1</code> (PowerShell), both on PATH. Everything works identically in PowerShell, cmd, and bash.</p></div>
+
+  <h3>3.1 <code>caspian scan</code></h3>
+  <p>Scans every eligible file under <code>[path]</code> (defaults to the current directory).</p>
+  <pre><code>caspian scan [path]
+  --format sarif|json|text            output format (default: sarif)
+  --fail-on error|warning|info|never  exit-code threshold (default: error)
+  --output &lt;file&gt;                     write to a file instead of stdout
+  --include &lt;substr,substr,...&gt;       extra path substrings to include
+  --exclude &lt;substr,substr,...&gt;       directory names to skip
+  --max-file-size &lt;bytes&gt;             skip files larger than this (default: 500000)
+  --baseline &lt;file&gt;                   suppress known findings; only NEW ones gate
+  --update-baseline                   regenerate &lt;baseline&gt;, then exit 0
+  --changed-since &lt;ref&gt;               scan only files changed since &lt;ref&gt; (PR scope)</code></pre>
+  <table>
+    <tr><th>Exit code</th><th>Meaning</th></tr>
+    <tr><td><code>0</code></td><td>Clean, or everything suppressed by the baseline</td></tr>
+    <tr><td><code>1</code></td><td>At least one finding at/above the <code>--fail-on</code> threshold</td></tr>
+    <tr><td><code>2</code></td><td>The scan failed to run (bad args, I/O error)</td></tr>
+  </table>
+  <h4>Examples</h4>
+  <pre><code>caspian scan . --format json --fail-on error          # gate the build on any Error
+caspian scan . --format sarif --output results.sarif   # write SARIF for CI upload
+caspian scan . --include src/ --exclude fixtures,mocks # narrow the scope
+caspian scan . --format json --fail-on never           # report only, never fail</code></pre>
+  <div class="callout warn"><p><strong>Note:</strong> the CLI prints findings at <em>every</em> severity; <code>--fail-on</code> controls only the exit code. To hide informational "reminder" findings, adopt a <a href="#config">baseline</a> or use the VS Code extension's severity filter.</p></div>
+
+  <h3>3.2 <code>caspian git-history</code></h3>
+  <p>The working-tree scan only sees current files. A secret committed and later "removed" is still in history — and in every clone. This walks all commits and flags secret-shaped strings in added lines, with commit SHA, author, and date.</p>
+  <pre><code>caspian git-history [path]
+  --output &lt;file&gt;       write findings to file (default: stdout)
+  --format json|text    output format (default: text)
+  --max-commits &lt;n&gt;     stop after N commits (default: all)
+  --rules secrets|all   rule set (default: secrets)</code></pre>
+  <p>If it finds anything: <strong>rotate the secret at the provider first</strong>, then rewrite history (BFG / <code>git filter-repo</code>) and force-push.</p>
+
+  <h3>3.3 <code>caspian check-updates</code></h3>
+  <p>Runs <code>npm audit</code> plus Node/TypeScript/stack version checks for the project at <code>[path]</code>.</p>
+  <pre><code>caspian check-updates .</code></pre>
+
+  <h3>3.4 Baselines</h3>
+  <p>Adopt Caspian into an existing codebase without a big-bang cleanup. A baseline records <em>known</em> findings so only <strong>new</strong> ones gate the build.</p>
+  <pre><code># 1. Record the current state
+caspian scan . --baseline .caspian-baseline.json --update-baseline
+
+# 2. From now on, only NEW findings fail the build
+caspian scan . --baseline .caspian-baseline.json --fail-on error</code></pre>
+  <p>Commit <code>.caspian-baseline.json</code>. It's count-based (per file, per rule), so it stays readable and auto-tightens as you fix things.</p>
+
+  <h3>3.5 PR-scope scanning (<code>--changed-since</code>)</h3>
+  <pre><code>caspian scan . --changed-since origin/main --fail-on error</code></pre>
+  <p>Semantics match <code>git diff --name-only --diff-filter=d origin/main...HEAD</code> (three-dot: "everything this branch added since diverging"). Deletions excluded. Pairs naturally with <code>--baseline</code>.</p>
+
+  <!-- 4 -->
+  <h2 id="vscode">4. Using it in VS Code</h2>
+  <p>Once installed, Caspian activates automatically for supported languages.</p>
+  <h3>Real-time &amp; on-save scanning</h3>
+  <ul>
+    <li><strong>As you type</strong> — findings appear as red/yellow squiggles (1s debounce).</li>
+    <li><strong>On save</strong> — full re-scan of the file.</li>
+    <li>Toggle via <code>caspianSecurity.autoCheck</code> and <code>caspianSecurity.checkOnSave</code>.</li>
+  </ul>
+  <h3>Commands (Command Palette → <code>Ctrl+Shift+P</code>)</h3>
+  <table>
+    <tr><th>Command</th><th>What it does</th></tr>
+    <tr><td>Caspian Security: Check Current File</td><td>Scan the active editor</td></tr>
+    <tr><td>Caspian Security: Check Entire Workspace</td><td>Scan all project files</td></tr>
+    <tr><td>Caspian Security: Scan Branch Changes (PR Scope)</td><td>Scan only files changed vs the base branch</td></tr>
+    <tr><td>Caspian Security: Fix Issue with AI</td><td>Generate an AI fix for a finding</td></tr>
+    <tr><td>Caspian Security: Show Results Panel</td><td>Interactive results browser</td></tr>
+    <tr><td>Caspian Security: Export Results to SARIF / JSON / CSV</td><td>Export findings</td></tr>
+    <tr><td>Caspian Security: Copy AI Agent Instructions</td><td>Copy a CLAUDE.md / Cursor / Antigravity block</td></tr>
+    <tr><td>Caspian Security: Copy MCP Server Config</td><td>Copy an MCP config for a chosen client</td></tr>
+    <tr><td>Caspian Security: Show Learning Dashboard</td><td>Rule effectiveness, hot zones, trends</td></tr>
+  </table>
+  <h3>One-click quick-fix lightbulb</h3>
+  <p>Hover a finding, press <code>Ctrl+.</code> (or click the lightbulb) for a deterministic one-click fix on the 13 most common mechanical remediations (e.g. Kubernetes <code>privileged: true → false</code>, Terraform <code>publicly_accessible = false</code>, <code>algorithms: ['RS256']</code> on <code>jwt.verify</code>). No AI round-trip; fully undoable.</p>
+  <h3>AI fixes</h3>
+  <p>For ambiguous cases, <strong>Fix Issue with AI</strong> sends the enclosing function (minimal-context by default) to your provider (Claude / GPT-4 / Gemini), shows a diff, and applies on confirmation. API keys live in VS Code SecretStorage, never in settings.</p>
+
+  <!-- 5 -->
+  <h2 id="agents">5. AI agent integration</h2>
+  <div class="callout ok"><p>The headline of 10.6.1: any AI coding agent can run Caspian <strong>with zero setup inside the target repo</strong>. Caspian runs via <code>npx</code> and <strong>never writes files into a project it doesn't own</strong> — you paste a small piece of text wherever <em>you</em> choose.</p></div>
+
+  <h3>Route 1 — one line in the agent's rules (any agent with a shell)</h3>
+  <pre><code>caspian snippet --agent claude   --mode after-edits   # → CLAUDE.md
+caspian snippet --agent cursor                         # → Cursor Project Rules / .cursorrules
+caspian snippet --agent antigravity                    # → Antigravity rules / memory
+caspian snippet --agent generic  --mode pre-commit     # → any system prompt</code></pre>
+  <table>
+    <tr><th>Mode</th><th>Trigger</th><th>Command used</th></tr>
+    <tr><td><code>request</code></td><td>"When I ask you to run a security check…"</td><td>full scan</td></tr>
+    <tr><td><code>after-edits</code> <em>(default)</em></td><td>"After you finish editing code…"</td><td>full scan</td></tr>
+    <tr><td><code>pre-commit</code></td><td>"Before committing changes…"</td><td><code>scan . --changed-since origin/main</code></td></tr>
+  </table>
+  <p>The pasted block tells the agent to run the scan, <strong>fix every <code>Error</code>-severity finding</strong>, re-run to confirm, and summarize the rest:</p>
+  <pre><code>## Security scanning — Caspian Security
+
+Caspian Security is a standalone security scanner (295+ rules...). It needs no
+configuration in this repository.
+
+After you finish editing code in this project, run:
+
+    npx -y caspian-security caspian scan . --format json --fail-on error
+
+Then read the JSON output and act on it:
+- Fix every finding at "Error" severity, then re-run to confirm it is clear.
+- Summarize any remaining Warning/Info findings for me.
+- Do not consider the task done (or commit) while Error-severity findings remain.</code></pre>
+  <p>In VS Code, <strong>Copy AI Agent Instructions</strong> puts the same block on your clipboard.</p>
+
+  <h3>Route 2 — MCP server (real tools for the assistant)</h3>
+  <p>Caspian ships a Model Context Protocol server exposing four tools: <code>scan</code>, <code>scan_git_history</code>, <code>list_rules</code>, <code>explain_rule</code>. The config shape is identical across clients; only the path differs. Print the right one:</p>
+  <pre><code>caspian mcp-config --client claude-code   # or claude-desktop | cursor | antigravity | cline</code></pre>
+  <pre><code>{
+  "mcpServers": {
+    "caspian-security": {
+      "command": "npx",
+      "args": ["-y", "caspian-security", "caspian", "mcp"]
+    }
+  }
+}</code></pre>
+  <table>
+    <tr><th>Client</th><th>Where the config lives</th></tr>
+    <tr><td>Claude Code</td><td><code>.mcp.json</code> at the project root, or <code>claude mcp add caspian-security -- npx -y caspian-security caspian mcp</code></td></tr>
+    <tr><td>Claude Desktop</td><td><code>%APPDATA%\Claude\claude_desktop_config.json</code> (Win) · <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> (mac)</td></tr>
+    <tr><td>Cursor</td><td><code>~/.cursor/mcp.json</code> (global) or <code>.cursor/mcp.json</code> (project)</td></tr>
+    <tr><td>Antigravity</td><td>Antigravity Settings → MCP / Plugins</td></tr>
+    <tr><td>Cline</td><td>Cline → MCP Servers → Configure</td></tr>
+  </table>
+  <p>Transport is stdio; no network port; no telemetry; no persistent state. Example prompt: <em>"Use Caspian to scan this repo for security issues, focusing on Error-severity findings."</em></p>
+
+  <h3>Which route?</h3>
+  <ul>
+    <li><strong>Route 1 (snippet)</strong> — simplest and most portable; works with any agent that can run a command, needs nothing installed, and <em>you</em> decide the trigger.</li>
+    <li><strong>Route 2 (MCP)</strong> — gives the assistant structured tools (rule lookup, history scan) it can call directly; nice for interactive chat.</li>
+  </ul>
+
+  <!-- 6 -->
+  <h2 id="cicd">6. CI/CD integration</h2>
+  <h3>GitHub Actions</h3>
+  <pre><code>- uses: Caspian-Explorer/caspian-security/.github/actions/scan@v10.6.1
+  with:
+    path: .
+    fail-on: error
+    baseline: .caspian-baseline.json   # optional</code></pre>
+  <p>Findings land in the GitHub Security tab automatically (SARIF upload).</p>
+  <h3>Any other CI (GitLab, Jenkins, CircleCI, Drone, BuildKite)</h3>
+  <pre><code>npx -y caspian-security caspian scan . --format sarif --output results.sarif --fail-on error</code></pre>
+  <p>The exit code gates the job: <code>0</code> passes, <code>1</code> fails on findings, <code>2</code> fails on a scan error.</p>
+  <h3>Git pre-commit hook (husky)</h3>
+  <pre><code># .husky/pre-commit
+npx -y caspian-security caspian scan . --changed-since origin/main --fail-on error</code></pre>
+  <h3>Scheduled scans</h3>
+  <p>Run <code>caspian scan</code> on cron (Linux/macOS) or Windows Task Scheduler to catch drift — e.g. nightly <code>caspian git-history .</code> for leaked secrets.</p>
+
+  <!-- 7 -->
+  <h2 id="config">7. Configuration</h2>
+  <h3>7.1 Settings (<code>caspianSecurity.*</code>)</h3>
+  <pre><code>{
+  "caspianSecurity.autoCheck": true,
+  "caspianSecurity.checkOnSave": true,
+  "caspianSecurity.severity": "warning",
+  "caspianSecurity.showInformational": true,
+  "caspianSecurity.reduceInternalPathSeverity": true,
+  "caspianSecurity.aiProvider": "anthropic",
+  "caspianSecurity.aiModel": "claude-sonnet-4-20250514",
+  "caspianSecurity.aiFixMinimalContext": true,
+  "caspianSecurity.enabledLanguages": [
+    "javascript", "typescript", "python", "java",
+    "csharp", "php", "go", "rust", "kotlin"
+  ]
+}</code></pre>
+  <p>40+ settings, including a per-category toggle (<code>caspianSecurity.enable&lt;Category&gt;</code>) for each of the 14 categories.</p>
+  <h3>7.2 <code>.caspianignore</code></h3>
+  <p>Place at the workspace root. One suppression per line (team-shared, version-controlled):</p>
+  <pre><code># RULE_CODE  file/path.ts:line   # optional reason
+XSS001 src/app.ts:42 # false positive, sanitized upstream
+CRED001 src/config.ts            # test credentials only
+DB001 src/api/users.ts:100</code></pre>
+  <p>The line number is optional (omit to suppress the rule for the whole file). Use <strong>Caspian Security: Ignore Issue</strong> to append entries interactively.</p>
+  <h3>7.3 Baseline file</h3>
+  <p><code>.caspian-baseline.json</code> — generated/updated with <code>--update-baseline</code>, consumed with <code>--baseline</code>. Count-based per file/rule; commit it to the repo.</p>
+
+  <!-- 8 -->
+  <h2 id="formats">8. Output formats</h2>
+  <h3>SARIF 2.1.0 (default)</h3>
+  <p>Standard SAST format consumed by GitHub code scanning and most tooling — tool metadata, rules catalog, and results with file/line/column and severity.</p>
+  <pre><code>caspian scan . --format sarif --output results.sarif</code></pre>
+  <h3>JSON (flat, agent-friendly)</h3>
+  <pre><code>{
+  "issues": [
+    {
+      "file": "src/app.ts",
+      "line": 42,
+      "column": 15,
+      "severity": "Error",
+      "code": "CRED001",
+      "category": "Secrets &amp; Credentials",
+      "message": "Hardcoded password or secret assignment",
+      "suggestion": "Use environment variables or a secure secret manager...",
+      "pattern": "password = \"...\""
+    }
+  ]
+}</code></pre>
+  <h3>Text (human-readable)</h3>
+  <pre><code>Caspian Security CLI — 15 finding(s) across 3 file(s)
+--- src/app.ts (3 issue(s)) ---
+  [Error] CRED001 (Line 42): Hardcoded password or secret assignment
+    Suggestion: Use environment variables or a secure secret manager...</code></pre>
+
+  <!-- 9 -->
+  <h2 id="rules">9. Rule categories</h2>
+  <p>295+ rules across 14 categories, plus intra-file taint rules (<code>TAINT001</code>–<code>TAINT008</code>) and 28 provider-prefix secret detectors.</p>
+  <table>
+    <tr><th>Category</th><th>Example coverage</th></tr>
+    <tr><td>Authentication &amp; Access Control</td><td>JWT secrets, session flags, weak passwords, missing rate limiting</td></tr>
+    <tr><td>Input Validation &amp; XSS</td><td><code>innerHTML</code>, <code>dangerouslySetInnerHTML</code>, template injection</td></tr>
+    <tr><td>CSRF Protection</td><td>Missing tokens, unsafe AJAX patterns</td></tr>
+    <tr><td>CORS Configuration</td><td>Wildcard origins, credentials with <code>*</code></td></tr>
+    <tr><td>Encryption &amp; Data Protection</td><td>Weak ciphers, disabled TLS verification, PII at rest, sensitive logging</td></tr>
+    <tr><td>API Security</td><td>Missing auth middleware, IDOR, key validation/expiry, rate-limit headers</td></tr>
+    <tr><td>Database Security</td><td>SQL/NoSQL injection, default credentials, auditing/backups</td></tr>
+    <tr><td>File Handling</td><td>Path traversal, public buckets, signed URLs, upload location</td></tr>
+    <tr><td>Secrets &amp; Credentials</td><td>Hardcoded secrets, <code>.env</code> references, provider-prefixed tokens</td></tr>
+    <tr><td>Frontend Security</td><td>Unsafe <code>eval</code>, missing SRI on CDN resources</td></tr>
+    <tr><td>Business Logic &amp; Payment</td><td>Client-side quota/premium checks, payment verification</td></tr>
+    <tr><td>Logging &amp; Monitoring</td><td>Missing authz-failure logs, admin-op logs, export/API-key events</td></tr>
+    <tr><td>Dependencies &amp; Supply Chain</td><td>Unpinned versions (<code>"*"</code>, <code>^</code>), audit findings</td></tr>
+    <tr><td>Infrastructure &amp; Deployment</td><td>Dockerfile / Terraform / Kubernetes misconfig, test data in prod</td></tr>
+  </table>
+  <p>Languages: <strong>JavaScript, TypeScript, Python, Java, C#, PHP, Go, Rust, Kotlin</strong> + Infrastructure-as-code (<strong>Dockerfile, Terraform/HCL, Kubernetes YAML</strong>). Look up any rule via the MCP tools <code>list_rules</code> / <code>explain_rule</code>.</p>
+
+  <!-- 10 -->
+  <h2 id="severity">10. Severity &amp; confidence</h2>
+  <ul>
+    <li><strong>Severity</strong> — <code>Error</code>, <code>Warning</code>, <code>Info</code>. <code>--fail-on</code> gates the exit code on a threshold (default <code>error</code>). Most "reminder"-style findings are <code>Info</code>.</li>
+    <li><strong>Confidence (VS Code)</strong> — findings are classified <strong>Critical / Safe / Verify-Needed</strong> from variable-source analysis, shown as badges. Internal-path findings can be down-ranked (<code>reduceInternalPathSeverity</code>).</li>
+    <li><strong>Taint tracking</strong> — <code>TAINT*</code> rules follow user input through a function body to dangerous sinks (exec, eval, fs, …), catching real dataflow bugs rather than surface patterns.</li>
+  </ul>
+
+  <!-- 11 -->
+  <h2 id="faq">11. Troubleshooting &amp; FAQ</h2>
+  <h4><code>npx -y caspian-security …</code> returns 404 Not Found</h4>
+  <p>The package isn't published to your npm registry yet. Publish it (<code>npm login</code> then <code>npm publish</code>), or run <code>npm link</code> in the repo for a global <code>caspian</code> from your local build, or invoke it directly: <code>node path/to/out/cli/caspian.js scan .</code>.</p>
+  <h4><code>caspian: command not found</code> after install/link</h4>
+  <p>Open a <strong>new</strong> terminal so PATH picks up the npm global bin dir (Windows: <code>%AppData%\npm</code>).</p>
+  <h4>Too many <code>Info</code> findings</h4>
+  <p>Those are advisory reminders. Gate CI with <code>--fail-on error</code> (they won't fail the build), adopt a <code>--baseline</code>, or filter interactively in the VS Code Results Panel.</p>
+  <h4>The scan exits <code>1</code> but I only see reminders</h4>
+  <p>Something at/above your threshold fired. Search the output for <code>"severity": "Error"</code> (or <code>Warning</code> if you lowered the threshold).</p>
+  <h4>Does Caspian send my code anywhere?</h4>
+  <p>No. The CLI, MCP server, and rule engine run entirely locally — no telemetry, no network. Only the optional <strong>AI Fix</strong> feature (opt-in, per-invocation consent) sends the minimal context you approve to your chosen provider.</p>
+  <h4>Will running it change my repo?</h4>
+  <p>No — scanning is read-only. AI-agent integration only <em>emits</em> text/config for you to paste; it never writes into a project.</p>
+  <h4>Which path does <code>caspian scan</code> accept?</h4>
+  <p>A <strong>directory</strong> (defaults to the current directory). It walks the tree for supported file types; pointing it at a single file scans nothing.</p>
+
+  <!-- 12 -->
+  <h2 id="cheatsheet">12. Command cheat sheet</h2>
+  <pre><code># Scan
+caspian scan .                                   # SARIF to stdout
+caspian scan . --format json --fail-on error     # JSON, gate on errors
+caspian scan . --format text                      # human-readable
+caspian scan . --changed-since origin/main        # PR scope
+caspian scan . --baseline .caspian-baseline.json  # only new findings
+caspian scan . --output results.sarif             # write to file
+
+# History & deps
+caspian git-history . --format json               # leaked secrets in history
+caspian check-updates .                           # npm audit + stack checks
+
+# AI agents
+caspian snippet --agent claude --mode after-edits # CLAUDE.md block
+caspian mcp-config --client cursor                # MCP config block
+caspian mcp                                        # start the MCP server
+
+# Meta
+caspian --version
+caspian help</code></pre>
+
+  <footer>
+    <p><strong>Caspian Security v10.6.1</strong> ·
+      <a href="https://marketplace.visualstudio.com/items?itemName=CaspianTools.caspian-security">Marketplace</a> ·
+      <a href="https://github.com/CaspianTools/caspian-security">GitHub</a> ·
+      <a href="https://github.com/CaspianTools/caspian-security/wiki">Wiki</a> ·
+      <a href="https://github.com/CaspianTools/caspian-security/releases">Releases</a>
+    </p>
+  </footer>
+
+</div>
+</main>
+</div>
+</body>
+</html>

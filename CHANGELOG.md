@@ -4,6 +4,23 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [10.6.1] - 2026-07-01
+
+Documentation release — a comprehensive user guide and a standing rule to keep docs in sync.
+
+### Added
+
+- **[docs/USER_GUIDE.md](docs/USER_GUIDE.md)** — comprehensive user guide covering installation, the standalone `caspian` CLI (every subcommand, flags, exit codes, baselines, PR-scope), VS Code usage, AI-agent integration (CLAUDE.md snippet + MCP for Claude Code / Cursor / Antigravity / Claude Desktop / Cline), CI/CD, configuration, output formats, rule categories, severity/confidence, troubleshooting, and a command cheat sheet.
+- **[docs/user-guide.html](docs/user-guide.html)** — self-contained, styled HTML version of the same guide (no external dependencies).
+- **GitHub Wiki "User Guide" page** mirroring `docs/USER_GUIDE.md`, linked from the sidebar and Home.
+- Discoverability pointers to the guide from `README.md` and `START_HERE.md`.
+
+### Changed
+
+- **CLAUDE.md** — added a Global Rule: any update must trigger a documentation update when relevant, keeping `docs/USER_GUIDE.md`, `docs/user-guide.html`, and the wiki User Guide in sync. Updated the wiki clone URL to the moved `CaspianTools/caspian-security` location.
+
+---
+
 ## [10.6.0] - 2026-07-01
 
 Caspian goes anywhere. One unified `caspian` command turns the scanner into a robust standalone tool you can run from a normal PowerShell / cmd / bash terminal — no VS Code required — and makes it a one-line integration for any AI coding agent (Claude Code, Cursor, Antigravity, Claude Desktop, Cline). Nothing is ever written into your repositories; Caspian only emits text and config you choose to paste.

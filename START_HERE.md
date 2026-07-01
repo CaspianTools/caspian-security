@@ -19,11 +19,12 @@ A **production-ready VS Code security extension** — and a **standalone `caspia
 **If you want to...**
 
 1. **Get it running in 5 minutes** -- Read [QUICKSTART.md](QUICKSTART.md)
-2. **Understand all features and rules** -- Read [README.md](README.md)
-3. **Build, customize, and extend it** -- Read [BUILD.md](BUILD.md)
-4. **Understand the system architecture** -- Read [ARCHITECTURE.md](ARCHITECTURE.md)
-5. **Deploy and set it up** -- Read [SETUP_GUIDE.md](SETUP_GUIDE.md)
-6. **See release history** -- Read [CHANGELOG.md](CHANGELOG.md)
+2. **Learn every way to use it (CLI, VS Code, AI agents, CI)** -- Read [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
+3. **Understand all features and rules** -- Read [README.md](README.md)
+4. **Build, customize, and extend it** -- Read [BUILD.md](BUILD.md)
+5. **Understand the system architecture** -- Read [ARCHITECTURE.md](ARCHITECTURE.md)
+6. **Deploy and set it up** -- Read [SETUP_GUIDE.md](SETUP_GUIDE.md)
+7. **See release history** -- Read [CHANGELOG.md](CHANGELOG.md)
 
 ---
 

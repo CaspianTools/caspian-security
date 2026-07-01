@@ -12,6 +12,8 @@ What sets it apart: **context-aware intelligence**. The scanner classifies issue
 
 ---
 
+> 📖 **New here?** The [complete User Guide](docs/USER_GUIDE.md) ([HTML](docs/user-guide.html)) covers every way to run Caspian — CLI, VS Code, AI agents (Claude Code / Cursor / Antigravity), and CI/CD.
+
 ## Install
 
 ### In VS Code

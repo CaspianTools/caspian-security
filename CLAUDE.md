@@ -3,10 +3,11 @@
 ## Global Rules
 
 - **Do NOT include `Co-Authored-By` lines in commit messages.** Never add co-author trailers for Claude or any AI assistant.
+- **Any update must trigger a documentation update when relevant.** Before finishing ANY task, ask: does this change behavior, commands, flags, configuration, output, defaults, or a user-facing feature? If yes, update every affected doc in the *same* change and keep them in sync — `README.md`, `ARCHITECTURE.md`, `BUILD.md`, `SETUP_GUIDE.md`, `QUICKSTART.md`, `START_HERE.md`, `CHANGELOG.md`, the `package.json` description, **`docs/USER_GUIDE.md`**, **`docs/user-guide.html`**, and the GitHub Wiki (especially the **User Guide** page, which mirrors `docs/USER_GUIDE.md`). The Markdown guide, the HTML guide, and the wiki User Guide must always match. If a change is purely internal with no user-facing or behavioral impact, say so explicitly rather than skipping the check silently.
 - **After every task, complete ALL post-task steps.** Every code change requires:
   1. **Version bump** — increment `package.json` version, update `CHANGELOG.md`, run `npm install` to sync lock file.
-  2. **Documentation updates** — update all affected docs: `README.md`, `ARCHITECTURE.md`, `BUILD.md`, `SETUP_GUIDE.md`, `QUICKSTART.md`, `START_HERE.md`, and `package.json` description.
-  3. **Wiki updates** — if the change affects user-facing features, update the relevant GitHub Wiki pages (clone from `https://github.com/Caspian-Explorer/caspian-security.wiki.git`, edit, commit, push).
+  2. **Documentation updates** — update all affected docs: `README.md`, `ARCHITECTURE.md`, `BUILD.md`, `SETUP_GUIDE.md`, `QUICKSTART.md`, `START_HERE.md`, `docs/USER_GUIDE.md`, `docs/user-guide.html`, and the `package.json` description. Keep `docs/USER_GUIDE.md`, `docs/user-guide.html`, and the wiki **User Guide** page in sync.
+  3. **Wiki updates** — if the change affects user-facing features, update the relevant GitHub Wiki pages (clone from `https://github.com/CaspianTools/caspian-security.wiki.git`, edit, commit, push). Always mirror `docs/USER_GUIDE.md` into the wiki **User Guide** page.
   4. **Build VSIX** — run `vsce package` to produce a new `.vsix` with the incremented version number. Confirm it packages without errors.
   5. **Commit** — stage all changed files and commit with a descriptive message following the Pre-Commit Checklist below (lint, compile, review, tag, push, release, discussion post).
   6. **Notify the user** — always tell the user the new version number and confirm the VSIX was built successfully. Never silently skip this.
@@ -56,8 +57,9 @@ Update **all** documentation affected by the changes:
    - `START_HERE.md` — documentation index
 3. **package.json** `description` field — update if the extension's capabilities changed.
 4. **GitHub Wiki** — if the changes affect features documented in the wiki, update the relevant wiki pages:
-   - Clone the wiki repo: `git clone https://github.com/Caspian-Explorer/caspian-security.wiki.git /tmp/caspian-wiki`
-   - Edit the affected pages (Home.md, Getting-Started.md, Configuration.md, AI-Fixes.md, Confidence-Scoring.md, Caspianignore.md, SARIF-Export.md, Rule-Reference.md, FAQ.md, _Sidebar.md)
+   - Clone the wiki repo: `git clone https://github.com/CaspianTools/caspian-security.wiki.git /tmp/caspian-wiki`
+   - Edit the affected pages (Home.md, Getting-Started.md, User-Guide.md, Terminal-Usage.md, AI-Agent-Integration.md, Configuration.md, AI-Fixes.md, Confidence-Scoring.md, Caspianignore.md, SARIF-Export.md, Rule-Reference.md, FAQ.md, _Sidebar.md)
+   - Keep `User-Guide.md` mirrored to `docs/USER_GUIDE.md` in the main repo (copy it over on any user-facing change)
    - If a new feature warrants its own wiki page, create it and add a link in `_Sidebar.md` and `Home.md`
    - Commit and push: `cd /tmp/caspian-wiki && git add -A && git commit -m "<description>" && git push`
    - If no wiki pages are affected, skip this step.
