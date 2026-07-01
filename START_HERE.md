@@ -2,11 +2,12 @@
 
 ## What You Have
 
-A **production-ready VS Code security extension** with:
+A **production-ready VS Code security extension** — and a **standalone `caspian` CLI** you can run anywhere — with:
 
 - **164+ security rules** across 14 categories
 - **Context-aware analysis** with confidence scoring
 - **AI-powered fixes** using Claude, GPT-4, or Gemini with function-level understanding
+- **Standalone `caspian` command** for PowerShell / cmd / bash (no VS Code needed) + one-line AI-agent integration (Claude Code, Cursor, Antigravity, Claude Desktop, Cline) via MCP or `npx`
 - **Team-shareable `.caspianignore`** for managing false positives
 - **SARIF v2.1.0 export** for GitHub Security Alerts
 - **8 languages supported** -- JavaScript, TypeScript, Python, Java, C#, PHP, Go, Rust
@@ -80,7 +81,13 @@ caspian-security/
 │   │   ├── databaseRules.ts    # DB001--DB012
 │   │   ├── secretsRules.ts     # CRED001--CRED009
 │   │   └── ... (10 more)
+│   ├── integration/
+│   │   └── agentSnippets.ts    # AI-agent instruction + MCP config generators (CLI + extension)
 │   └── cli/
+│       ├── caspian.ts          # Unified `caspian` command (scan/git-history/mcp/snippet/...)
+│       ├── scan.ts             # Standalone scanner CLI (SARIF/JSON/text)
+│       ├── gitHistoryScan.ts   # Git-history secret scanner CLI
+│       ├── mcpServer.ts        # Model Context Protocol server (stdio)
 │       └── checkUpdates.ts     # Standalone dependency checker CLI
 ├── out/                        # Compiled JavaScript (generated)
 ├── package.json                # Extension manifest

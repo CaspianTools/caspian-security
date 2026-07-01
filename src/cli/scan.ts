@@ -563,10 +563,10 @@ function meetsFailThreshold(worst: SecuritySeverity | null, failOn: CliOptions['
   return worst >= thresholds[failOn];
 }
 
-async function main(): Promise<void> {
+export async function runScanCli(argv: string[] = process.argv.slice(2)): Promise<void> {
   let opts: CliOptions;
   try {
-    opts = parseArgs(process.argv.slice(2));
+    opts = parseArgs(argv);
   } catch (err: any) {
     process.stderr.write(`caspian-scan: ${err.message}\n`);
     printHelp();
@@ -702,7 +702,9 @@ async function main(): Promise<void> {
   process.exit(meetsFailThreshold(worstSeverity(resultsForOutput), opts.failOn) ? 1 : 0);
 }
 
-main().catch((err: Error) => {
-  process.stderr.write(`caspian-scan: fatal — ${err.message}\n`);
-  process.exit(2);
-});
+if (require.main === module) {
+  runScanCli().catch((err: Error) => {
+    process.stderr.write(`caspian-scan: fatal — ${err.message}\n`);
+    process.exit(2);
+  });
+}

@@ -303,7 +303,7 @@ export function dispatchTool(name: string, args: unknown): ToolResponse {
 
 // --- Server bootstrap -----------------------------------------------------
 
-async function main(): Promise<void> {
+export async function startMcpServer(): Promise<void> {
   const pkg = JSON.parse(
     fs.readFileSync(path.join(__dirname, '..', '..', 'package.json'), 'utf-8')
   );
@@ -330,7 +330,7 @@ async function main(): Promise<void> {
 }
 
 if (require.main === module) {
-  main().catch((err: Error) => {
+  startMcpServer().catch((err: Error) => {
     process.stderr.write(`caspian-mcp: fatal — ${err.message}\n`);
     process.exit(1);
   });

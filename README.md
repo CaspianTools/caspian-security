@@ -22,34 +22,73 @@ code --install-extension CaspianTools.caspian-security
 
 Or search "Caspian Security" in the Extensions sidebar. Also available on [Open VSX](https://open-vsx.org) for Cursor, Windsurf, and VSCodium users.
 
-### Via npm (for CI, scripts, any editor)
+### As a standalone command line tool (PowerShell, cmd, bash — no VS Code needed)
+
+Caspian is a robust security scanner you can run **anywhere**. One unified `caspian` command
+fronts every capability:
 
 ```bash
-# One-off, zero install
-npx caspian-security caspian-scan . --format sarif --fail-on error
+# One-off, zero install (works in PowerShell, cmd, and bash)
+npx -y caspian-security caspian scan . --format json --fail-on error
 
-# Or install globally
+# Or install globally, then just `caspian ...`
 npm install -g caspian-security
-caspian-scan .                       # main scanner, emits SARIF / JSON / text
-caspian-git-history-scan .           # walk git history for leaked secrets
-caspian-check-updates                # npm audit + stack version checks
-caspian-mcp                          # MCP server (stdio) for Claude Desktop / Cursor / etc.
+caspian scan .                 # main scanner — SARIF / JSON / text, exit-code gating
+caspian git-history .          # walk git history for leaked secrets
+caspian check-updates          # npm audit + stack version checks
+caspian mcp                    # start the MCP server (stdio)
+caspian snippet                # print a paste-ready AI-agent instruction block
+caspian mcp-config             # print an MCP client config block
+caspian --help                 # full command list
 ```
 
-### As an MCP server (Claude Desktop, Cursor, any MCP client)
+Exit codes: `0` = clean, `1` = findings at/above the `--fail-on` threshold, `2` = the scan failed.
+The original `caspian-scan` / `caspian-git-history-scan` / `caspian-check-updates` / `caspian-mcp`
+bins still work unchanged.
+
+### Run it from any AI agent (Claude Code, Cursor, Antigravity, …)
+
+Because Caspian runs via `npx` with **zero setup in the target repo**, any AI coding agent that can
+run a shell command can run it. Drop one plain-language line into your agent's own config
+(`CLAUDE.md`, Cursor Project Rules, Antigravity rules) and the agent will run Caspian while it works.
+Generate the exact block to paste:
+
+```bash
+caspian snippet --agent claude   --mode after-edits   # for CLAUDE.md
+caspian snippet --agent cursor                         # for Cursor Project Rules / .cursorrules
+caspian snippet --agent antigravity                    # for Antigravity rules
+```
+
+In VS Code, the commands **"Caspian Security: Copy AI Agent Instructions"** and
+**"Caspian Security: Copy MCP Server Config"** put the same text on your clipboard. Caspian never
+writes into your project — it only gives you text to paste wherever you like.
+
+### As an MCP server (Claude Code, Cursor, Antigravity, Claude Desktop, Cline)
 
 ```json
 {
   "mcpServers": {
     "caspian-security": {
       "command": "npx",
-      "args": ["-y", "caspian-security", "caspian-mcp"]
+      "args": ["-y", "caspian-security", "caspian", "mcp"]
     }
   }
 }
 ```
 
-Gives the assistant four tools: `scan`, `scan_git_history`, `list_rules`, `explain_rule`. See [BUILD.md §3c](BUILD.md) for full client configuration.
+Gives the assistant four tools: `scan`, `scan_git_history`, `list_rules`, `explain_rule`. Where the
+config lives per client:
+
+| Client | Config location |
+|---|---|
+| Claude Code | `.mcp.json` at the project root, or `claude mcp add caspian-security -- npx -y caspian-security caspian mcp` |
+| Claude Desktop | `%APPDATA%\Claude\claude_desktop_config.json` (Windows) / `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) |
+| Cursor | `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project) |
+| Antigravity | Antigravity Settings → MCP / Plugins |
+| Cline | Cline → MCP Servers → Configure |
+
+Run `caspian mcp-config --client <name>` to print the block with the right path. See
+[BUILD.md §3c](BUILD.md) for full client configuration.
 
 ### In GitHub Actions
 

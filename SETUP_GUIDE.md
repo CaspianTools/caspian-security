@@ -37,7 +37,13 @@ caspian-security/
 │   │   ├── loggingRules.ts         # LOG001--LOG009
 │   │   ├── dependenciesRules.ts    # DEP001--DEP006
 │   │   └── infrastructureRules.ts  # INFRA001--INFRA008
+│   ├── integration/
+│   │   └── agentSnippets.ts         # AI-agent instruction + MCP config generators
 │   └── cli/
+│       ├── caspian.ts               # Unified `caspian` command (scan/git-history/mcp/snippet/...)
+│       ├── scan.ts                  # Standalone scanner CLI (SARIF/JSON/text)
+│       ├── gitHistoryScan.ts        # Git-history secret scanner CLI
+│       ├── mcpServer.ts             # Model Context Protocol server (stdio)
 │       └── checkUpdates.ts          # Standalone dependency checker CLI
 ├── out/                             # Compiled JavaScript (generated)
 ├── package.json                     # Extension manifest
@@ -90,6 +96,30 @@ eval(userCode);                                                 // FE001
 ```
 
 Open the Problems panel (`Ctrl+Shift+M`). You should see security warnings with confidence badges and fix suggestions.
+
+---
+
+## Use It Without VS Code (Standalone CLI + AI Agents)
+
+Caspian is also a standalone `caspian` command that runs in any terminal — PowerShell, cmd, or bash — and integrates with any AI coding agent. No project-side setup is required; it never writes into your repos.
+
+```bash
+# Zero install (any shell)
+npx -y caspian-security caspian scan . --format json --fail-on error
+
+# Or install once and use everywhere
+npm install -g caspian-security
+caspian scan .                 # scan (SARIF/JSON/text) — exit 0 clean / 1 findings / 2 error
+caspian git-history .          # walk git history for leaked secrets
+caspian check-updates          # npm audit + stack version checks
+caspian mcp                    # start the MCP server (stdio)
+caspian snippet --agent claude # print a paste-ready CLAUDE.md block for an AI agent
+caspian mcp-config --client cursor  # print an MCP config for a client
+```
+
+To wire Caspian into an AI agent (Claude Code, Cursor, Antigravity, Claude Desktop, Cline):
+run `caspian snippet` and paste the block into the agent's config, or `caspian mcp-config` for
+the MCP route. Full per-client details are in [BUILD.md §3c–3d](BUILD.md) and [README.md](README.md).
 
 ---
 

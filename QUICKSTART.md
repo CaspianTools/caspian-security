@@ -79,6 +79,26 @@ Open Settings (`Ctrl+,`) and search "caspianSecurity":
 }
 ```
 
+## Use it without VS Code (terminal + any AI agent)
+
+Caspian is also a standalone `caspian` command — run it from PowerShell, cmd, or bash:
+
+```bash
+# Zero install (any shell)
+npx -y caspian-security caspian scan . --format json --fail-on error
+
+# Or install once
+npm install -g caspian-security
+caspian scan .            # scan the current project
+caspian snippet           # print a paste-ready CLAUDE.md / rules block for an AI agent
+caspian mcp-config        # print an MCP client config block
+caspian --help            # full command list
+```
+
+To let an AI agent (Claude Code, Cursor, Antigravity, …) run Caspian while it works, run
+`caspian snippet --agent claude` and paste the block into your project's `CLAUDE.md`. See
+[BUILD.md §3c–3d](BUILD.md) and [README.md](README.md) for MCP and per-client details.
+
 ## Next Steps
 
 - **Full documentation**: [README.md](README.md)

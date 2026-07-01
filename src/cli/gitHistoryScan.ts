@@ -374,10 +374,10 @@ function formatJSON(findings: HistoricalFinding[]): string {
 
 // --- Entry point ----------------------------------------------------------
 
-async function main(): Promise<void> {
+export async function runGitHistoryCli(argv: string[] = process.argv.slice(2)): Promise<void> {
   let opts: CliOptions;
   try {
-    opts = parseArgs(process.argv.slice(2));
+    opts = parseArgs(argv);
   } catch (err: any) {
     process.stderr.write(`caspian-git-history-scan: ${err.message}\n`);
     printHelp();
@@ -404,7 +404,9 @@ async function main(): Promise<void> {
   process.exit(findings.length > 0 ? 1 : 0);
 }
 
-main().catch((err: Error) => {
-  process.stderr.write(`caspian-git-history-scan: fatal — ${err.message}\n`);
-  process.exit(2);
-});
+if (require.main === module) {
+  runGitHistoryCli().catch((err: Error) => {
+    process.stderr.write(`caspian-git-history-scan: fatal — ${err.message}\n`);
+    process.exit(2);
+  });
+}

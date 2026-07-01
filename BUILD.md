@@ -382,38 +382,70 @@ In the GitHub Action:
     baseline: .caspian-baseline.json    # committed at repo root
 ```
 
-### 3c. MCP server — use Caspian from Claude Desktop, Cursor, any MCP client
+### 3c. MCP server — use Caspian from Claude Code, Cursor, Antigravity, Claude Desktop, Cline
 
 Caspian ships an MCP (Model Context Protocol) server so any MCP-aware
 client can call scans directly from tool use. The server exposes four
 tools: `scan`, `scan_git_history`, `list_rules`, `explain_rule`. No
 configuration needed beyond pointing the client at the bin.
 
-**Claude Desktop** — add to `~/Library/Application Support/Claude/claude_desktop_config.json`
-(macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+The config shape is identical across every client; only the file location
+differs. `caspian mcp-config --client <name>` prints the block with the
+right path:
 
 ```json
 {
   "mcpServers": {
     "caspian-security": {
       "command": "npx",
-      "args": ["-y", "caspian-security", "caspian-mcp"]
+      "args": ["-y", "caspian-security", "caspian", "mcp"]
     }
   }
 }
 ```
 
-**Cursor** — same config shape under `~/.cursor/mcp.json` or the IDE's
-MCP settings panel. Cursor respects the standard MCP client spec.
+| Client | Where the config lives |
+|---|---|
+| **Claude Code** | `.mcp.json` at the project root, or run `claude mcp add caspian-security -- npx -y caspian-security caspian mcp` |
+| **Claude Desktop** | `%APPDATA%\Claude\claude_desktop_config.json` (Windows) / `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) |
+| **Cursor** | `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project) |
+| **Antigravity** | Antigravity Settings → MCP / Plugins (`mcp_config.json`) |
+| **Cline** | Cline → MCP Servers → Configure (`cline_mcp_settings.json`) |
 
-**Zed, Cline, and other MCP clients** — point them at the `caspian-mcp`
-binary. Transport is stdio; no network port is opened. The server has no
-telemetry and no persistent state — it's a thin wrapper over the same
-scanRunner the CLI uses.
+Transport is stdio; no network port is opened. The server has no telemetry
+and no persistent state — it's a thin wrapper over the same `scanRunner`
+the CLI uses. (`caspian-mcp` remains as a direct bin for backward compat.)
 
 Example prompt once wired in: *"Use Caspian to scan /path/to/my/repo for
 security issues, focusing on Error-severity findings."* The client calls
 the `scan` tool with the appropriate arguments and receives JSON back.
+
+### 3d. AI-agent integration — one line in CLAUDE.md / rules, zero repo setup
+
+The MCP route (§3c) gives an assistant *tools*. The lighter-weight route
+gives **any** agent that can run a shell command the ability to run Caspian
+with nothing installed in the target repo: paste one plain-language line into
+the agent's own config and Caspian runs via `npx`.
+
+Generate the exact paste-ready block:
+
+```bash
+caspian snippet --agent claude   --mode after-edits   # → CLAUDE.md
+caspian snippet --agent cursor                         # → Cursor Project Rules / .cursorrules
+caspian snippet --agent antigravity                    # → Antigravity rules / memory
+caspian snippet --agent generic  --mode pre-commit     # → any system prompt, pre-commit trigger
+```
+
+`--mode` controls the trigger sentence: `request` ("when I ask"),
+`after-edits` (default), or `pre-commit` (which uses
+`caspian scan . --changed-since origin/main`). The block tells the agent to
+run the scan, fix `Error`-severity findings, re-run to confirm, and summarize
+the rest.
+
+In VS Code the same text is one click away — **"Caspian Security: Copy AI
+Agent Instructions"** and **"Caspian Security: Copy MCP Server Config"**.
+Caspian only ever copies text to your clipboard; it never writes into a repo
+it doesn't own.
 
 ### 3b. PR-scope scanning with `--changed-since`
 

@@ -1,13 +1,13 @@
 {
   "name": "caspian-security",
   "displayName": "Caspian Security",
-  "description": "Security scanner for VS Code — 295+ rules covering code and infrastructure (Dockerfile, Terraform, Kubernetes), intra-file taint tracking, SSRF/XXE/SSTI/deserialization/JWT/OAuth/LDAP, 28 provider-prefix secret detectors, git-history scanner, AI fixes, hardened webview, reusable GitHub Action with SARIF upload, Open VSX release",
+  "description": "Security scanner for VS Code AND a standalone `caspian` CLI you can run anywhere (PowerShell/cmd/bash, no VS Code needed) — 295+ rules covering code and infrastructure (Dockerfile, Terraform, Kubernetes), intra-file taint tracking, SSRF/XXE/SSTI/deserialization/JWT/OAuth/LDAP, 28 provider-prefix secret detectors, git-history scanner, AI fixes, MCP server + one-command AI-agent integration (Claude Code, Cursor, Antigravity), hardened webview, reusable GitHub Action with SARIF upload, Open VSX release",
   "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Caspian-Explorer/caspian-security"
   },
-  "version": "10.5.1",
+  "version": "10.6.0",
   "publisher": "CaspianTools",
   "license": "MIT",
   "engines": {
@@ -46,6 +46,7 @@
   ],
   "main": "./out/extension.js",
   "bin": {
+    "caspian": "./out/cli/caspian.js",
     "caspian-scan": "./out/cli/scan.js",
     "caspian-git-history-scan": "./out/cli/gitHistoryScan.js",
     "caspian-check-updates": "./out/cli/checkUpdates.js",
@@ -62,6 +63,14 @@
   ],
   "contributes": {
     "commands": [
+      {
+        "command": "caspian-security.copyAgentInstructions",
+        "title": "Caspian Security: Copy AI Agent Instructions (CLAUDE.md / Cursor / Antigravity)"
+      },
+      {
+        "command": "caspian-security.copyMcpConfig",
+        "title": "Caspian Security: Copy MCP Server Config"
+      },
       {
         "command": "caspian-security.runCheck",
         "title": "Run Security Check"

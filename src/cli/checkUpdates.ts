@@ -3,8 +3,8 @@
 import * as path from 'path';
 import { checkDependencies, formatResultsAsText } from '../dependencyChecker';
 
-async function main(): Promise<void> {
-  const projectPath = process.argv[2] || process.cwd();
+export async function runCheckUpdatesCli(argv: string[] = process.argv.slice(2)): Promise<void> {
+  const projectPath = argv[0] || process.cwd();
   const resolvedPath = path.resolve(projectPath);
 
   console.log('Caspian Security: Dependency & Stack Update Check');
@@ -28,4 +28,9 @@ async function main(): Promise<void> {
   }
 }
 
-main();
+if (require.main === module) {
+  runCheckUpdatesCli().catch((error) => {
+    console.error('Error running dependency check:', error);
+    process.exit(2);
+  });
+}

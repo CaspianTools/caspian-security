@@ -35,6 +35,16 @@ import { WelcomePanel } from './welcomePanel';
 import { SecurityScoreService } from './securityScore';
 import { registerCaspianCodeActionProvider } from './codeActions/provider';
 import { AutoVerifier } from './autoVerifier';
+import {
+  AGENTS,
+  MCP_CLIENTS,
+  TRIGGERS,
+  AgentId,
+  McpClientId,
+  TriggerMode,
+  buildAgentInstructions,
+  formatMcpConfigForDisplay,
+} from './integration/agentSnippets';
 
 const BATCH_SIZE = 50;
 
@@ -309,6 +319,58 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function registerCommands(context: vscode.ExtensionContext) {
+  // --- AI-agent / terminal integration -----------------------------------
+  // These commands never write into a repo; they only copy paste-ready text so
+  // the user can wire Caspian into any AI agent (Claude Code, Cursor,
+  // Antigravity, ...) or MCP client at whatever interval/event they choose.
+  context.subscriptions.push(
+    vscode.commands.registerCommand('caspian-security.copyAgentInstructions', async () => {
+      const agentPick = await vscode.window.showQuickPick(
+        AGENTS.map(a => ({ label: a.label, description: `paste into ${a.placement}`, id: a.id })),
+        { placeHolder: 'Which AI agent are you setting up to run Caspian Security?' }
+      );
+      if (!agentPick) { return; }
+      const modePick = await vscode.window.showQuickPick(
+        TRIGGERS.map(t => ({ label: t.label, id: t.id })),
+        { placeHolder: 'When should the agent run Caspian?' }
+      );
+      if (!modePick) { return; }
+
+      const block = buildAgentInstructions(agentPick.id as AgentId, modePick.id as TriggerMode);
+      await vscode.env.clipboard.writeText(block);
+      const placement = AGENTS.find(a => a.id === agentPick.id)?.placement ?? 'your agent config';
+      const choice = await vscode.window.showInformationMessage(
+        `Caspian: AI agent instructions copied — paste into ${placement}.`,
+        'Show'
+      );
+      if (choice === 'Show') {
+        const doc = await vscode.workspace.openTextDocument({ content: block, language: 'markdown' });
+        await vscode.window.showTextDocument(doc, { preview: true });
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('caspian-security.copyMcpConfig', async () => {
+      const clientPick = await vscode.window.showQuickPick(
+        MCP_CLIENTS.map(c => ({ label: c.label, description: c.configPath.split('\n')[0], id: c.id })),
+        { placeHolder: 'Which MCP client should Caspian be wired into?' }
+      );
+      if (!clientPick) { return; }
+
+      const blob = formatMcpConfigForDisplay(clientPick.id as McpClientId);
+      await vscode.env.clipboard.writeText(blob);
+      const choice = await vscode.window.showInformationMessage(
+        `Caspian: MCP config for ${clientPick.label} copied to clipboard.`,
+        'Show'
+      );
+      if (choice === 'Show') {
+        const doc = await vscode.workspace.openTextDocument({ content: blob, language: 'jsonc' });
+        await vscode.window.showTextDocument(doc, { preview: true });
+      }
+    })
+  );
+
   context.subscriptions.push(
     vscode.commands.registerCommand('caspian-security.runCheck', async () => {
       const editor = vscode.window.activeTextEditor;

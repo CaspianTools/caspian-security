@@ -233,6 +233,12 @@ interface SecurityRule {
 - Checks Node.js, TypeScript, and VS Code engine versions
 - Standalone CLI mode via `src/cli/checkUpdates.ts`
 
+### Command-line & AI-agent integration (src/cli/, src/integration/)
+- **scanRunner.ts** -- `vscode`-free workspace scan core (`runWorkspaceScan`) shared by every CLI and the MCP server, so terminal, CI, and agent runs use the exact same rule engine as the extension
+- **cli/caspian.ts** -- unified `caspian` command; parses a subcommand (`scan`, `git-history`, `check-updates`, `mcp`, `snippet`, `mcp-config`, `help`, `--version`) and delegates to the exported entry of each specialised CLI. Each CLI exports an `argv`-taking function guarded by `if (require.main === module)` so both the standalone bin and the dispatcher reuse one implementation
+- **cli/scan.ts / gitHistoryScan.ts / mcpServer.ts / checkUpdates.ts** -- the specialised CLIs / MCP server (stdio; four tools: `scan`, `scan_git_history`, `list_rules`, `explain_rule`)
+- **integration/agentSnippets.ts** -- pure (no `vscode`/`fs`) generators for the paste-ready AI-agent instruction block and per-client MCP config; single source of truth imported by both `cli/caspian.ts` and `extension.ts`. Caspian only emits this text — it never writes into a target repo
+
 ### Task Management (taskTypes.ts, taskCatalog.ts, taskStore.ts, taskManager.ts, taskTreeProvider.ts, taskCommands.ts, taskDetailPanel.ts)
 - **taskTypes.ts** -- Enums (TaskInterval, TaskStatus, AutoCompleteTrigger) and interfaces (SecurityTaskDefinition, TaskInstance)
 - **taskCatalog.ts** -- 23 predefined recurring security tasks across all 14 categories with configurable intervals and auto-completion triggers

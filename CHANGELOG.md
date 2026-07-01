@@ -4,6 +4,27 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [10.6.0] - 2026-07-01
+
+Caspian goes anywhere. One unified `caspian` command turns the scanner into a robust standalone tool you can run from a normal PowerShell / cmd / bash terminal — no VS Code required — and makes it a one-line integration for any AI coding agent (Claude Code, Cursor, Antigravity, Claude Desktop, Cline). Nothing is ever written into your repositories; Caspian only emits text and config you choose to paste.
+
+### Added
+
+- **[src/cli/caspian.ts](src/cli/caspian.ts)** — new unified `caspian` command (bin) that fronts every capability: `caspian scan | git-history | check-updates | mcp | snippet | mcp-config | help | --version`. Install globally (`npm i -g caspian-security` → `caspian scan .`) or zero-install (`npx -y caspian-security caspian scan .`). Works in PowerShell, cmd, and bash.
+- **[src/integration/agentSnippets.ts](src/integration/agentSnippets.ts)** — single source of truth for AI-agent integration text, shared by the CLI and the extension (no `vscode`/`fs` dependency). `buildAgentInstructions()` produces a plain-language block to paste into `CLAUDE.md` / Cursor Project Rules / Antigravity rules; `buildMcpConfig()` / `formatMcpConfigForDisplay()` produce per-client MCP config.
+- **`caspian snippet [--agent claude|cursor|antigravity|generic] [--mode request|after-edits|pre-commit]`** — prints a ready-to-paste instruction block so any agent can run Caspian mid-task via `npx`, with zero setup in the target repo.
+- **`caspian mcp-config [--client claude-code|claude-desktop|cursor|antigravity|cline]`** — prints the MCP server config with the correct file path for that client.
+- **Two VS Code commands** — *"Caspian Security: Copy AI Agent Instructions"* and *"Caspian Security: Copy MCP Server Config"*. Both copy-to-clipboard only; they never write into a repo.
+- **Unit tests** — [src/__tests__/agentSnippets.test.ts](src/__tests__/agentSnippets.test.ts) and [src/__tests__/caspian.test.ts](src/__tests__/caspian.test.ts) cover snippet/config generation and dispatcher routing/validation.
+
+### Changed
+
+- CLI entry points (`scan.ts`, `gitHistoryScan.ts`, `checkUpdates.ts`, `mcpServer.ts`) now export an `argv`-taking function (`runScanCli` / `runGitHistoryCli` / `runCheckUpdatesCli` / `startMcpServer`) guarded by `if (require.main === module)`, so the unified dispatcher reuses the exact same implementation with no duplication. The original `caspian-scan` / `caspian-git-history-scan` / `caspian-check-updates` / `caspian-mcp` bins are unchanged.
+- MCP documentation now covers Claude Code (`.mcp.json` / `claude mcp add`) and Antigravity in addition to Claude Desktop / Cursor / Cline; the recommended command shape is `npx -y caspian-security caspian mcp`.
+- `package.json` `description` updated to reflect the standalone CLI and AI-agent integration.
+
+---
+
 ## [10.5.1] - 2026-05-07
 
 Maintenance release — marketplace re-publish with refreshed `package-lock.json`. No functional changes from 10.5.0.
