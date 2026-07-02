@@ -1,0 +1,20 @@
+# .worktreeinclude — gitignored files copied into each new Claude Code worktree.
+#
+# Uses .gitignore syntax. A file is copied only when it BOTH matches a pattern
+# here AND is gitignored AND actually exists — tracked files are never
+# duplicated, and missing files are silently skipped (so unused patterns no-op).
+# Docs: https://code.claude.com/docs/en/worktrees#copy-gitignored-files-into-worktrees
+#
+# Caspian Security is a self-contained VS Code extension with no backend service
+# credentials in the tree. The only gitignored secrets are local env files, so
+# those are the only patterns mirrored below: if such a file ever exists locally,
+# new worktrees inherit it automatically; until then these lines do nothing.
+#
+# NOT copied on purpose: node_modules/ (large — run `npm install` per worktree),
+# the compiled out/ tree, and packaged *.vsix build artifacts (all regenerated
+# by `npm run compile` / `vsce package` inside each worktree).
+
+# Local environment files
+.env
+.env.local
+.env.*.local
