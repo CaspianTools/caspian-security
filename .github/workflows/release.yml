@@ -1,0 +1,87 @@
+name: Release
+
+# Deliberate, manually-dispatched release. Creates the vX.Y.Z tag and the
+# GitHub Release (VSIX attached) using the workflow's own token, then
+# publishes to the VS Code Marketplace / Open VSX when the VSCE_PAT /
+# OVSX_PAT repository secrets are configured. Publish steps skip with a
+# notice when a secret is absent, and the release step is idempotent, so
+# the workflow can be re-run after adding secrets.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Compile
+        run: npm run compile
+
+      - name: Test
+        run: npm test
+
+      - name: Package VSIX
+        run: npx --yes @vscode/vsce package
+
+      - name: Read version
+        id: meta
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Create tag and GitHub Release with VSIX
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release v$VERSION already exists — skipping creation."
+            exit 0
+          fi
+          awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" {flag=1; next}
+            /^## \[/ {flag=0}
+            flag
+          ' CHANGELOG.md > release-notes.md
+          gh release create "v$VERSION" "caspian-security-$VERSION.vsix" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "v$VERSION" \
+            --notes-file release-notes.md
+
+      - name: Publish to VS Code Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "::notice::VSCE_PAT secret not set — skipping VS Code Marketplace publish. Add the secret and re-run this workflow."
+            exit 0
+          fi
+          npx --yes @vscode/vsce publish --pat "$VSCE_PAT"
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          if [ -z "$OVSX_PAT" ]; then
+            echo "::notice::OVSX_PAT secret not set — skipping Open VSX publish. Add the secret and re-run this workflow."
+            exit 0
+          fi
+          npx ovsx publish "caspian-security-$VERSION.vsix" -p "$OVSX_PAT"
