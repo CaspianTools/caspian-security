@@ -1769,17 +1769,19 @@ async function runDependencyCheck(quiet = false): Promise<DependencyCheckResult 
       return undefined;
     }
 
+    const includeOsv = ConfigManager.getInstance().get<boolean>('osvCheck', false);
+
     const fs = await import('fs');
     const packageJsonPath = path.join(workspaceRoot, 'package.json');
-    if (!fs.existsSync(packageJsonPath)) {
-      if (!quiet) { vscode.window.showWarningMessage('Caspian Security: No package.json found in workspace root'); }
+    if (!fs.existsSync(packageJsonPath) && !includeOsv) {
+      if (!quiet) { vscode.window.showWarningMessage('Caspian Security: No package.json found in workspace root (enable caspianSecurity.osvCheck to scan non-npm manifests via OSV.dev)'); }
       return undefined;
     }
 
     let result: DependencyCheckResult | undefined;
 
     if (quiet) {
-      result = await checkDependencies(workspaceRoot);
+      result = await checkDependencies(workspaceRoot, { includeOsv });
     } else {
       await vscode.window.withProgress(
         {
@@ -1788,7 +1790,7 @@ async function runDependencyCheck(quiet = false): Promise<DependencyCheckResult 
           cancellable: false,
         },
         async () => {
-          result = await checkDependencies(workspaceRoot);
+          result = await checkDependencies(workspaceRoot, { includeOsv });
         }
       );
     }
@@ -1806,8 +1808,9 @@ async function runDependencyCheck(quiet = false): Promise<DependencyCheckResult 
 
         const outdatedCount = result.outdatedPackages.length;
         const vulnCount = result.auditSummary.totalVulnerabilities;
+        const osvSuffix = result.osv ? `, ${result.osv.vulnerabilities.length} OSV.dev advisory(ies)` : '';
         vscode.window.showInformationMessage(
-          `Caspian Security: ${outdatedCount} outdated package(s), ${vulnCount} vulnerability(ies) found. See Output panel.`
+          `Caspian Security: ${outdatedCount} outdated package(s), ${vulnCount} vulnerability(ies)${osvSuffix} found. See Output panel.`
         );
       }
 
@@ -1866,6 +1869,41 @@ function storeDependencyResultsAsIssues(result: DependencyCheckResult, workspace
       scannedAt: new Date(),
     });
     updateHasResultsContext();
+  }
+
+  // OSV.dev findings attach to the manifest they were parsed from.
+  if (result.osv) {
+    const byManifest = new Map<string, import('./types').SecurityIssue[]>();
+    for (const vuln of result.osv.vulnerabilities) {
+      const issue: import('./types').SecurityIssue = {
+        line: 0,
+        column: 0,
+        message: `${vuln.id}: ${vuln.packageName}@${vuln.packageVersion} — ${vuln.summary} (${vuln.severity})`,
+        severity: mapAuditSeverity(vuln.severity === 'unknown' ? 'moderate' : vuln.severity),
+        suggestion: vuln.fixedVersion
+          ? `Update ${vuln.packageName} to ${vuln.fixedVersion} or later. Details: ${vuln.url}`
+          : `No fixed version listed. Review: ${vuln.url}`,
+        code: 'DEP-OSV',
+        pattern: vuln.packageName,
+        category: SecurityCategory.DependenciesSupplyChain,
+      };
+      const list = byManifest.get(vuln.manifest) || [];
+      list.push(issue);
+      byManifest.set(vuln.manifest, list);
+    }
+    for (const [manifest, manifestIssues] of byManifest) {
+      const manifestPath = path.join(workspaceRoot, manifest);
+      resultsStore.setFileResults(`dependency-check-osv:${manifestPath}`, {
+        filePath: manifestPath,
+        relativePath: manifest,
+        languageId: 'plaintext',
+        issues: manifestIssues,
+        scannedAt: new Date(),
+      });
+    }
+    if (byManifest.size > 0) {
+      updateHasResultsContext();
+    }
   }
 }
 

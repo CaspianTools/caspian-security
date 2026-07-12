@@ -1,13 +1,13 @@
 {
   "name": "caspian-security",
   "displayName": "Caspian Security",
-  "description": "Security scanner for VS Code AND a standalone `caspian` CLI you can run anywhere (PowerShell/cmd/bash, no VS Code needed) — 295+ rules covering code and infrastructure (Dockerfile, Terraform, Kubernetes), intra-file taint tracking, SSRF/XXE/SSTI/deserialization/JWT/OAuth/LDAP, 28 provider-prefix secret detectors, git-history scanner, AI fixes, MCP server + one-command AI-agent integration (Claude Code, Cursor, Antigravity), hardened webview, reusable GitHub Action with SARIF upload, Open VSX release",
+  "description": "Security scanner for VS Code AND a standalone `caspian` CLI you can run anywhere (PowerShell/cmd/bash, no VS Code needed) — 295+ rules covering code and infrastructure (Dockerfile, Terraform, Kubernetes), intra-file taint tracking, SSRF/XXE/SSTI/deserialization/JWT/OAuth/LDAP, 28 provider-prefix secret detectors, git-history scanner, opt-in OSV.dev multi-ecosystem dependency check (Python, Go, Rust, Java, Ruby, PHP), AI fixes, MCP server + one-command AI-agent integration (Claude Code, Cursor, Antigravity), hardened webview, reusable GitHub Action with SARIF upload, Open VSX release",
   "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Caspian-Explorer/caspian-security"
   },
-  "version": "10.6.1",
+  "version": "10.7.0",
   "publisher": "CaspianTools",
   "license": "MIT",
   "engines": {
@@ -470,6 +470,11 @@
           "type": "boolean",
           "default": true,
           "description": "Include dependency update and vulnerability checks during workspace scans"
+        },
+        "caspianSecurity.osvCheck": {
+          "type": "boolean",
+          "default": false,
+          "description": "Opt-in: during dependency checks, also query the OSV.dev vulnerability database for non-npm manifests (requirements.txt, go.mod, Cargo.lock/Cargo.toml, pom.xml, Gemfile.lock, composer.lock). Privacy: sends dependency names and versions — never your code — to the public api.osv.dev API."
         },
         "caspianSecurity.autoVerify": {
           "type": "boolean",

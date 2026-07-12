@@ -9,7 +9,7 @@
  *
  *   caspian scan [path] [flags]      run the security scanner
  *   caspian git-history [path]       walk git history for leaked secrets
- *   caspian check-updates [path]     npm audit + stack version checks
+ *   caspian check-updates [path]     npm audit + stack version checks (--osv for OSV.dev)
  *   caspian mcp                      start the MCP server (stdio)
  *   caspian snippet [--agent ...]    print a paste-ready CLAUDE.md / rules block
  *   caspian mcp-config [--client ...] print an MCP client config block
@@ -64,6 +64,8 @@ function printHelp(): void {
     '  scan [path]              Run the security scanner (SARIF/JSON/text, exit code gating).\n' +
     '  git-history [path]       Walk git history for leaked secrets.\n' +
     '  check-updates [path]     npm audit + stack version checks.\n' +
+    '                             --osv adds an OSV.dev check of non-npm manifests\n' +
+    '                             (requirements.txt, go.mod, Cargo.lock, pom.xml, ...).\n' +
     '  mcp                      Start the Model Context Protocol server (stdio).\n' +
     '  snippet                  Print a paste-ready instruction block for an AI agent.\n' +
     '                             --agent claude|cursor|antigravity|generic (default: claude)\n' +

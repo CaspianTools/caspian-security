@@ -111,7 +111,7 @@ npx -y caspian-security caspian scan . --format json --fail-on error
 npm install -g caspian-security
 caspian scan .                 # scan (SARIF/JSON/text) — exit 0 clean / 1 findings / 2 error
 caspian git-history .          # walk git history for leaked secrets
-caspian check-updates          # npm audit + stack version checks
+caspian check-updates          # npm audit + stack version checks (--osv adds OSV.dev multi-ecosystem scan)
 caspian mcp                    # start the MCP server (stdio)
 caspian snippet --agent claude # print a paste-ready CLAUDE.md block for an AI agent
 caspian mcp-config --client cursor  # print an MCP config for a client

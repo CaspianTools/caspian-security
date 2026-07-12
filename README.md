@@ -37,7 +37,7 @@ npx -y caspian-security caspian scan . --format json --fail-on error
 npm install -g caspian-security
 caspian scan .                 # main scanner — SARIF / JSON / text, exit-code gating
 caspian git-history .          # walk git history for leaked secrets
-caspian check-updates          # npm audit + stack version checks
+caspian check-updates          # npm audit + stack version checks (--osv adds OSV.dev multi-ecosystem scan)
 caspian mcp                    # start the MCP server (stdio)
 caspian snippet                # print a paste-ready AI-agent instruction block
 caspian mcp-config             # print an MCP client config block
@@ -248,6 +248,8 @@ Discovers all supported files in your project (excluding `node_modules`) and sca
 
 **Dependency Check**
 Checks for outdated npm packages, known vulnerabilities (`npm audit`), and stack component updates (Node.js, TypeScript, VS Code engine). Can be run standalone from the Command Palette or automatically as part of a workspace scan. Also available as a CLI tool via `npm run check-updates`.
+
+Opt in to the **OSV.dev multi-ecosystem check** (`caspianSecurity.osvCheck` setting, or `caspian check-updates --osv` on the CLI) and Caspian also checks non-npm manifests — `requirements.txt` (Python), `go.mod` (Go), `Cargo.lock`/`Cargo.toml` (Rust), `pom.xml` (Java), `Gemfile.lock` (Ruby), `composer.lock` (PHP) — against the [OSV.dev](https://osv.dev) vulnerability database (Google/GitHub-backed, aggregates the GitHub Advisory Database). Privacy: only dependency names and versions are sent to `api.osv.dev` — never your code. With OSV enabled, the dependency check works even in projects with no `package.json`.
 
 ---
 

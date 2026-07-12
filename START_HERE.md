@@ -74,6 +74,7 @@ caspian-security/
 │   ├── confidenceAnalyzer.ts   # Confidence classification
 │   ├── caspianIgnore.ts        # .caspianignore file parsing
 │   ├── dependencyChecker.ts    # npm outdated/audit + stack checking
+│   ├── osvScanner.ts           # OSV.dev multi-ecosystem dependency check (opt-in)
 │   ├── types.ts                # TypeScript type definitions
 │   ├── rules/                  # 14 category rule files (164+ rules)
 │   │   ├── index.ts            # Rule registry

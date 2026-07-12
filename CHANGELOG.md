@@ -4,6 +4,23 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [10.7.0] - 2026-07-12
+
+Multi-ecosystem dependency scanning via OSV.dev. The dependency check is no longer npm-only: opt in and Caspian also checks Python, Go, Rust, Java, Ruby, and PHP manifests against the OSV.dev vulnerability database (Google/GitHub-backed, aggregates the GitHub Advisory Database). Privacy-first: only dependency names and versions are sent — never code — and the check is off by default.
+
+### Added
+
+- **[src/osvScanner.ts](src/osvScanner.ts)** — OSV.dev scanner: parses `requirements.txt` (PyPI), `go.mod` (Go), `Cargo.lock`/`Cargo.toml` (crates.io, lockfile preferred), `pom.xml` (Maven, with simple `${property}` resolution), `Gemfile.lock` (RubyGems), and `composer.lock` (Packagist) from the project root, batch-queries `api.osv.dev/v1/querybatch`, fetches advisory details (severity, summary, fixed version), and never throws — network failures land in `errors`.
+- **`caspian check-updates --osv`** — CLI flag enabling the OSV.dev check; `check-updates` also gained `--help`. High/critical OSV advisories now contribute to the exit-code-1 gate alongside `npm audit`.
+- **`caspianSecurity.osvCheck`** VS Code setting (default `false`) — enables the OSV.dev check during **Check Dependency Updates**. Findings appear in the Output panel report and as `DEP-OSV` issues attached to the manifest they came from.
+- **Non-npm projects supported** — with the OSV check enabled, the dependency check no longer requires a `package.json`; npm-specific checks are skipped and the OSV.dev check still runs.
+
+### Changed
+
+- `checkDependencies()` accepts a `DependencyCheckOptions` object (`{ includeOsv }`) and returns an optional `osv` result block; the text report gained an "OSV.DEV MULTI-ECOSYSTEM CHECK" section and a summary line.
+
+---
+
 ## [10.6.1] - 2026-07-01
 
 Documentation release — a comprehensive user guide and a standing rule to keep docs in sync.
