@@ -554,26 +554,7 @@ Import and merge in `src/rules/index.ts`.
 
 ## Continuous Integration
 
-Example `.github/workflows/publish.yml`:
-```yaml
-name: Publish
-on:
-  push:
-    tags: ['v*']
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - run: npm install
-      - run: npm run compile
-      - run: npx vsce publish
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-```
+Releases are automated by [`.github/workflows/release.yml`](.github/workflows/release.yml), triggered manually (Actions → Release → Run workflow, or `gh workflow run release.yml`). It runs the full gate (lint, compile, test), packages the VSIX, creates the `vX.Y.Z` tag + GitHub Release with the VSIX attached, and publishes to the VS Code Marketplace / Open VSX when the `VSCE_PAT` / `OVSX_PAT` repository secrets are configured. Publish steps skip with a notice when a secret is absent, and the release step is idempotent, so the workflow can safely be re-run after adding secrets. The version released is whatever `package.json` says on `main` — bump it before dispatching.
 
 ---
 

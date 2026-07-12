@@ -4,6 +4,16 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [10.7.1] - 2026-07-12
+
+First automated release. Ships everything in 10.7.0 (the OSV.dev multi-ecosystem dependency check — see below) plus the release pipeline itself.
+
+### Added
+
+- **[.github/workflows/release.yml](.github/workflows/release.yml)** — manually-dispatched release workflow: runs lint/compile/test, packages the VSIX, creates the `vX.Y.Z` tag and GitHub Release with the VSIX attached, and publishes to the VS Code Marketplace / Open VSX when the `VSCE_PAT` / `OVSX_PAT` repository secrets are configured (publish steps skip with a notice otherwise; the release step is idempotent so the workflow can be re-run after adding secrets).
+
+---
+
 ## [10.7.0] - 2026-07-12
 
 Multi-ecosystem dependency scanning via OSV.dev. The dependency check is no longer npm-only: opt in and Caspian also checks Python, Go, Rust, Java, Ruby, and PHP manifests against the OSV.dev vulnerability database (Google/GitHub-backed, aggregates the GitHub Advisory Database). Privacy-first: only dependency names and versions are sent — never code — and the check is off by default.
