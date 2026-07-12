@@ -110,7 +110,7 @@ caspian <command> [options]
 
   scan [path]           Run the security scanner (SARIF / JSON / text)
   git-history [path]    Walk git history for leaked secrets
-  check-updates [path]  npm audit + stack version checks
+  check-updates [path]  npm audit + stack version checks (--osv: OSV.dev multi-ecosystem)
   mcp                   Start the MCP server (stdio)
   snippet               Print a paste-ready AI-agent instruction block
   mcp-config            Print an MCP client config block
@@ -190,6 +190,16 @@ Runs `npm audit` plus Node/TypeScript/stack version checks for the project at `[
 ```bash
 caspian check-updates .
 ```
+
+Add `--osv` to also check non-npm manifests against the [OSV.dev](https://osv.dev) vulnerability database (Google/GitHub-backed, aggregates the GitHub Advisory Database):
+
+```bash
+caspian check-updates . --osv
+```
+
+Supported manifests (project root): `requirements.txt` (Python), `go.mod` (Go), `Cargo.lock`/`Cargo.toml` (Rust — lockfile preferred), `pom.xml` (Java), `Gemfile.lock` (Ruby), `composer.lock` (PHP). High/critical OSV advisories trigger exit code `1`, same as `npm audit` findings. With `--osv`, the command works even in projects with no `package.json` (npm checks are skipped).
+
+**Privacy:** only dependency names and versions are sent to `api.osv.dev` — never your code. The check is opt-in and off by default.
 
 ### 3.4 Baselines
 
@@ -396,6 +406,8 @@ Set in VS Code Settings (`Ctrl+,` → search "caspianSecurity") or workspace `.v
 
 There are 40+ settings, including a per-category toggle (`caspianSecurity.enable<Category>`) for each of the 14 categories.
 
+Notable opt-in: `caspianSecurity.osvCheck` (default `false`) extends **Check Dependency Updates** with an [OSV.dev](https://osv.dev) query of non-npm manifests (`requirements.txt`, `go.mod`, `Cargo.lock`/`Cargo.toml`, `pom.xml`, `Gemfile.lock`, `composer.lock`). Only dependency names and versions are sent — never your code.
+
 ### 7.2 `.caspianignore`
 
 Place at the workspace root. One suppression per line:
@@ -537,6 +549,7 @@ caspian scan . --output results.sarif             # write to file
 # History & deps
 caspian git-history . --format json               # leaked secrets in history
 caspian check-updates .                           # npm audit + stack checks
+caspian check-updates . --osv                     # + OSV.dev check of non-npm manifests
 
 # AI agents
 caspian snippet --agent claude --mode after-edits # CLAUDE.md block

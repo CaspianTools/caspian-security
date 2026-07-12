@@ -187,7 +187,7 @@ caspian mcp-config --client cursor    # MCP config for a client</code></pre>
 
   scan [path]           Run the security scanner (SARIF / JSON / text)
   git-history [path]    Walk git history for leaked secrets
-  check-updates [path]  npm audit + stack version checks
+  check-updates [path]  npm audit + stack version checks (--osv: OSV.dev multi-ecosystem)
   mcp                   Start the MCP server (stdio)
   snippet               Print a paste-ready AI-agent instruction block
   mcp-config            Print an MCP client config block
@@ -233,6 +233,10 @@ caspian scan . --format json --fail-on never           # report only, never fail
   <h3>3.3 <code>caspian check-updates</code></h3>
   <p>Runs <code>npm audit</code> plus Node/TypeScript/stack version checks for the project at <code>[path]</code>.</p>
   <pre><code>caspian check-updates .</code></pre>
+  <p>Add <code>--osv</code> to also check non-npm manifests against the <a href="https://osv.dev">OSV.dev</a> vulnerability database (Google/GitHub-backed, aggregates the GitHub Advisory Database):</p>
+  <pre><code>caspian check-updates . --osv</code></pre>
+  <p>Supported manifests (project root): <code>requirements.txt</code> (Python), <code>go.mod</code> (Go), <code>Cargo.lock</code>/<code>Cargo.toml</code> (Rust — lockfile preferred), <code>pom.xml</code> (Java), <code>Gemfile.lock</code> (Ruby), <code>composer.lock</code> (PHP). High/critical OSV advisories trigger exit code <code>1</code>, same as <code>npm audit</code> findings. With <code>--osv</code>, the command works even in projects with no <code>package.json</code> (npm checks are skipped).</p>
+  <p><strong>Privacy:</strong> only dependency names and versions are sent to <code>api.osv.dev</code> — never your code. The check is opt-in and off by default.</p>
 
   <h3>3.4 Baselines</h3>
   <p>Adopt Caspian into an existing codebase without a big-bang cleanup. A baseline records <em>known</em> findings so only <strong>new</strong> ones gate the build.</p>
@@ -368,6 +372,7 @@ npx -y caspian-security caspian scan . --changed-since origin/main --fail-on err
   ]
 }</code></pre>
   <p>40+ settings, including a per-category toggle (<code>caspianSecurity.enable&lt;Category&gt;</code>) for each of the 14 categories.</p>
+  <p>Notable opt-in: <code>caspianSecurity.osvCheck</code> (default <code>false</code>) extends <strong>Check Dependency Updates</strong> with an <a href="https://osv.dev">OSV.dev</a> query of non-npm manifests (<code>requirements.txt</code>, <code>go.mod</code>, <code>Cargo.lock</code>/<code>Cargo.toml</code>, <code>pom.xml</code>, <code>Gemfile.lock</code>, <code>composer.lock</code>). Only dependency names and versions are sent — never your code.</p>
   <h3>7.2 <code>.caspianignore</code></h3>
   <p>Place at the workspace root. One suppression per line (team-shared, version-controlled):</p>
   <pre><code># RULE_CODE  file/path.ts:line   # optional reason
@@ -465,6 +470,7 @@ caspian scan . --output results.sarif             # write to file
 # History & deps
 caspian git-history . --format json               # leaked secrets in history
 caspian check-updates .                           # npm audit + stack checks
+caspian check-updates . --osv                     # + OSV.dev check of non-npm manifests
 
 # AI agents
 caspian snippet --agent claude --mode after-edits # CLAUDE.md block

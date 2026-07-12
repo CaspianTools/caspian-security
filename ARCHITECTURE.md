@@ -231,7 +231,15 @@ interface SecurityRule {
 ### dependencyChecker.ts
 - Runs `npm outdated` and `npm audit`
 - Checks Node.js, TypeScript, and VS Code engine versions
-- Standalone CLI mode via `src/cli/checkUpdates.ts`
+- Standalone CLI mode via `src/cli/checkUpdates.ts` (`--osv` flag)
+- Opt-in OSV.dev multi-ecosystem check via `osvScanner.ts` (`caspianSecurity.osvCheck` / `--osv`); with OSV enabled, `package.json` is no longer required — npm checks are skipped and the OSV check still runs
+
+### osvScanner.ts
+- `vscode`-free (shared by extension and CLI)
+- Parses root-level manifests: `requirements.txt` (PyPI), `go.mod` (Go), `Cargo.lock`/`Cargo.toml` (crates.io, lockfile preferred), `pom.xml` (Maven, simple `${property}` resolution), `Gemfile.lock` (RubyGems), `composer.lock` (Packagist)
+- Batch-queries `api.osv.dev/v1/querybatch` (500 per batch), then fetches advisory details (`/v1/vulns/{id}`, capped at 60, 8 concurrent) for severity, summary, and fixed version
+- Privacy: sends only dependency names/versions/ecosystems — never code; opt-in everywhere it is exposed
+- Never throws: network and parse failures are collected into the result's `errors`
 
 ### Command-line & AI-agent integration (src/cli/, src/integration/)
 - **scanRunner.ts** -- `vscode`-free workspace scan core (`runWorkspaceScan`) shared by every CLI and the MCP server, so terminal, CI, and agent runs use the exact same rule engine as the extension
@@ -310,7 +318,8 @@ interface SecurityRule {
 | `statusBarManager.ts` | ~85 | Status bar integration |
 | `diagnosticsManager.ts` | ~60 | VS Code diagnostics |
 | `gitIntegration.ts` | ~50 | Git SCM integration |
-| `dependencyChecker.ts` | ~200 | Dependency + stack checking |
+| `dependencyChecker.ts` | ~250 | Dependency + stack checking |
+| `osvScanner.ts` | ~400 | OSV.dev multi-ecosystem dependency check |
 | `taskTypes.ts` | ~75 | Task data models and enums |
 | `taskCatalog.ts` | ~210 | 23 predefined security task definitions |
 | `taskStore.ts` | ~180 | Task persistence via PersistenceManager |

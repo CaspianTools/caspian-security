@@ -1,6 +1,7 @@
 import { exec } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { runOsvCheck, OsvCheckResult } from './osvScanner';
 
 // ---- Interfaces ----
 
@@ -40,9 +41,21 @@ export interface DependencyCheckResult {
   outdatedPackages: OutdatedPackage[];
   auditSummary: AuditSummary;
   stackVersions: StackVersionInfo[];
+  /** Present when the opt-in OSV.dev multi-ecosystem check ran. */
+  osv?: OsvCheckResult;
   checkedAt: Date;
   projectPath: string;
   errors: string[];
+}
+
+export interface DependencyCheckOptions {
+  /**
+   * Opt-in: also check non-npm manifests (requirements.txt, go.mod,
+   * Cargo.lock/Cargo.toml, pom.xml, Gemfile.lock, composer.lock) against the
+   * OSV.dev API. Sends dependency names and versions — never code — to
+   * api.osv.dev.
+   */
+  includeOsv?: boolean;
 }
 
 // ---- Utilities ----
@@ -258,37 +271,55 @@ async function checkStackVersions(projectPath: string): Promise<{ versions: Stac
 
 // ---- Main Entry Point ----
 
-export async function checkDependencies(projectPath: string): Promise<DependencyCheckResult> {
+export async function checkDependencies(
+  projectPath: string,
+  options: DependencyCheckOptions = {}
+): Promise<DependencyCheckResult> {
   const errors: string[] = [];
+  const hasPackageJson = fs.existsSync(path.join(projectPath, 'package.json'));
 
-  // Validate package.json exists
-  const packageJsonPath = path.join(projectPath, 'package.json');
-  if (!fs.existsSync(packageJsonPath)) {
+  // The OSV check covers non-npm ecosystems, so it runs regardless of package.json.
+  const osvPromise: Promise<OsvCheckResult | undefined> = options.includeOsv
+    ? runOsvCheck(projectPath)
+    : Promise.resolve(undefined);
+
+  if (!hasPackageJson) {
+    const osv = await osvPromise;
+    if (!osv) {
+      errors.push('No package.json found in project directory');
+    } else {
+      errors.push('No package.json found — npm checks skipped (OSV.dev check still ran)');
+      errors.push(...osv.errors);
+    }
     return {
       outdatedPackages: [],
       auditSummary: { totalVulnerabilities: 0, bySeverity: {}, vulnerabilities: [] },
       stackVersions: [],
+      osv,
       checkedAt: new Date(),
       projectPath,
-      errors: ['No package.json found in project directory'],
+      errors,
     };
   }
 
   // Run all checks concurrently
-  const [outdatedResult, auditResult, stackResult] = await Promise.all([
+  const [outdatedResult, auditResult, stackResult, osvResult] = await Promise.all([
     runNpmOutdated(projectPath),
     runNpmAudit(projectPath),
     checkStackVersions(projectPath),
+    osvPromise,
   ]);
 
   if (outdatedResult.error) { errors.push(outdatedResult.error); }
   if (auditResult.error) { errors.push(auditResult.error); }
   errors.push(...stackResult.errors);
+  if (osvResult) { errors.push(...osvResult.errors); }
 
   return {
     outdatedPackages: outdatedResult.packages,
     auditSummary: auditResult.summary,
     stackVersions: stackResult.versions,
+    osv: osvResult,
     checkedAt: new Date(),
     projectPath,
     errors,
@@ -336,6 +367,32 @@ export function formatResultsAsText(result: DependencyCheckResult): string {
   }
   lines.push('');
 
+  // OSV.dev multi-ecosystem check (opt-in)
+  if (result.osv) {
+    lines.push(`OSV.DEV MULTI-ECOSYSTEM CHECK (${result.osv.vulnerabilities.length} found)`);
+    lines.push('-'.repeat(50));
+    if (result.osv.manifestsScanned.length === 0) {
+      lines.push('  No supported manifests found (requirements.txt, go.mod, Cargo.lock/Cargo.toml, pom.xml, Gemfile.lock, composer.lock).');
+    } else {
+      lines.push(`  Manifests: ${result.osv.manifestsScanned.join(', ')} (${result.osv.packagesQueried} package(s) checked)`);
+      if (result.osv.vulnerabilities.length === 0) {
+        lines.push('  No known vulnerabilities.');
+      } else {
+        lines.push('');
+        for (const vuln of result.osv.vulnerabilities) {
+          lines.push(`  [${vuln.severity.toUpperCase()}] ${vuln.id} — ${vuln.packageName}@${vuln.packageVersion} (${vuln.ecosystem}, ${vuln.manifest})`);
+          if (vuln.summary) {
+            lines.push(`    ${vuln.summary}`);
+          }
+          lines.push(`    Fixed in: ${vuln.fixedVersion || 'no fix listed'}`);
+          lines.push(`    Details: ${vuln.url}`);
+          lines.push('');
+        }
+      }
+    }
+    lines.push('');
+  }
+
   // Stack versions
   lines.push('STACK VERSIONS');
   lines.push('-'.repeat(50));
@@ -360,6 +417,10 @@ export function formatResultsAsText(result: DependencyCheckResult): string {
 
   lines.push(`  ${result.outdatedPackages.length} outdated package(s)${result.outdatedPackages.length > 0 ? ` (${majorCount} major, ${minorCount} minor, ${patchCount} patch)` : ''}`);
   lines.push(`  ${result.auditSummary.totalVulnerabilities} vulnerability(ies)${result.auditSummary.vulnerabilities.length > 0 ? ` (${Object.entries(result.auditSummary.bySeverity).map(([k, v]) => `${v} ${k}`).join(', ')})` : ''}`);
+
+  if (result.osv) {
+    lines.push(`  ${result.osv.vulnerabilities.length} OSV.dev advisory(ies) across ${result.osv.manifestsScanned.length} manifest(s)`);
+  }
 
   const outdatedStack = result.stackVersions.filter(s => s.updateType !== 'up-to-date');
   lines.push(`  ${outdatedStack.length} stack component(s) with available updates`);
