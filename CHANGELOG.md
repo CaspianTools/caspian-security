@@ -10,7 +10,7 @@ First automated release. Ships everything in 10.7.0 (the OSV.dev multi-ecosystem
 
 ### Added
 
-- **[.github/workflows/release.yml](.github/workflows/release.yml)** — manually-dispatched release workflow: runs lint/compile/test, packages the VSIX, creates the `vX.Y.Z` tag and GitHub Release with the VSIX attached, and publishes to the VS Code Marketplace / Open VSX when the `VSCE_PAT` / `OVSX_PAT` repository secrets are configured (publish steps skip with a notice otherwise; the release step is idempotent so the workflow can be re-run after adding secrets).
+- **[.github/workflows/release.yml](.github/workflows/release.yml)** — release workflow (manual dispatch or `release/**` branch push): runs lint/compile/test, packages the VSIX, creates the `vX.Y.Z` tag and GitHub Release with the VSIX attached, and publishes to the VS Code Marketplace / Open VSX when the `VSCE_PAT` / `OVSX_PAT` repository secrets are configured (publish steps skip with a notice otherwise; the release step is idempotent so the workflow can be re-run after adding secrets).
 
 ---
 

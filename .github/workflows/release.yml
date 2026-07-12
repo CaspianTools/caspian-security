@@ -1,14 +1,18 @@
 name: Release
 
-# Deliberate, manually-dispatched release. Creates the vX.Y.Z tag and the
+# Deliberate release, triggered manually (workflow_dispatch) or by pushing
+# a release/** branch (e.g. release/v10.7.1). Creates the vX.Y.Z tag and the
 # GitHub Release (VSIX attached) using the workflow's own token, then
 # publishes to the VS Code Marketplace / Open VSX when the VSCE_PAT /
 # OVSX_PAT repository secrets are configured. Publish steps skip with a
 # notice when a secret is absent, and the release step is idempotent, so
-# the workflow can be re-run after adding secrets.
+# the workflow can be re-run after adding secrets. Nothing fires on pushes
+# to main or ordinary feature branches.
 
 on:
   workflow_dispatch:
+  push:
+    branches: ['release/**']
 
 permissions:
   contents: write
