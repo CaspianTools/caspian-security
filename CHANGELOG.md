@@ -4,6 +4,16 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [10.7.2] - 2026-07-15
+
+npm packaging fix so the standalone CLI actually ships. npm 11's publish-time normalization silently strips `bin` entries whose paths start with `./`, which meant the `caspian` CLI commands were dropped from the published npm package. Paths are now bare-relative so the five console commands install correctly via `npm install -g caspian-security`.
+
+### Fixed
+
+- **[package.json](package.json)** — `bin` paths changed from `./out/cli/*.js` to `out/cli/*.js`. npm 11's publish normalization rejected the `./`-prefixed values (`"bin[caspian]" script name ... was invalid and removed`), which would have published the package without any of its `caspian`, `caspian-scan`, `caspian-git-history-scan`, `caspian-check-updates`, or `caspian-mcp` executables.
+
+---
+
 ## [10.7.1] - 2026-07-12
 
 First automated release. Ships everything in 10.7.0 (the OSV.dev multi-ecosystem dependency check — see below) plus the release pipeline itself.

@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/Caspian-Explorer/caspian-security"
   },
-  "version": "10.7.1",
+  "version": "10.7.2",
   "publisher": "CaspianTools",
   "license": "MIT",
   "engines": {
@@ -46,11 +46,11 @@
   ],
   "main": "./out/extension.js",
   "bin": {
-    "caspian": "./out/cli/caspian.js",
-    "caspian-scan": "./out/cli/scan.js",
-    "caspian-git-history-scan": "./out/cli/gitHistoryScan.js",
-    "caspian-check-updates": "./out/cli/checkUpdates.js",
-    "caspian-mcp": "./out/cli/mcpServer.js"
+    "caspian": "out/cli/caspian.js",
+    "caspian-scan": "out/cli/scan.js",
+    "caspian-git-history-scan": "out/cli/gitHistoryScan.js",
+    "caspian-check-updates": "out/cli/checkUpdates.js",
+    "caspian-mcp": "out/cli/mcpServer.js"
   },
   "files": [
     "out/",
