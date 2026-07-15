@@ -85,7 +85,7 @@ Caspian is also a standalone `caspian` command — run it from PowerShell, cmd, 
 
 ```bash
 # Zero install (any shell)
-npx -y caspian-security caspian scan . --format json --fail-on error
+npx -y caspian-security scan . --format json --fail-on error
 
 # Or install once
 npm install -g caspian-security

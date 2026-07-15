@@ -49,14 +49,14 @@ export const PACKAGE_NAME = 'caspian-security';
 
 /** Zero-install full-workspace scan. Always correct: it scans the working tree as-is. */
 export const SCAN_COMMAND =
-  `npx -y ${PACKAGE_NAME} caspian scan . --format json --fail-on error`;
+  `npx -y ${PACKAGE_NAME} scan . --format json --fail-on error`;
 
 /**
  * PR/pre-commit scan. `--changed-since <base>` diffs `<base>...HEAD`, so it only
  * makes sense against a *committed* base branch — not HEAD (which would be empty).
  */
 export const PR_SCAN_COMMAND =
-  `npx -y ${PACKAGE_NAME} caspian scan . --changed-since origin/main --format json --fail-on error`;
+  `npx -y ${PACKAGE_NAME} scan . --changed-since origin/main --format json --fail-on error`;
 
 export const AGENTS: AgentInfo[] = [
   { id: 'claude',      label: 'Claude Code',  placement: 'your project\'s CLAUDE.md' },
@@ -76,7 +76,7 @@ export const MCP_CLIENTS: McpClientInfo[] = [
     id: 'claude-code',
     label: 'Claude Code',
     configPath: 'a .mcp.json file at your project root',
-    note: 'Or run once, no file needed:\n  claude mcp add caspian-security -- npx -y caspian-security caspian mcp',
+    note: 'Or run once, no file needed:\n  claude mcp add caspian-security -- npx -y caspian-security mcp',
   },
   {
     id: 'claude-desktop',
@@ -174,7 +174,7 @@ export function buildMcpConfig(client: McpClientId = 'claude-code'): {
       mcpServers: {
         'caspian-security': {
           command: 'npx',
-          args: ['-y', PACKAGE_NAME, 'caspian', 'mcp'],
+          args: ['-y', PACKAGE_NAME, 'mcp'],
         },
       },
     },

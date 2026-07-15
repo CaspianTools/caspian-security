@@ -157,7 +157,7 @@
 
   <h3>Command line (npm)</h3>
   <pre><code># Zero install — runs the latest published version (any shell)
-npx -y caspian-security caspian scan .
+npx -y caspian-security scan .
 
 # Or install once and get the `caspian` command everywhere
 npm install -g caspian-security
@@ -301,7 +301,7 @@ configuration in this repository.
 
 After you finish editing code in this project, run:
 
-    npx -y caspian-security caspian scan . --format json --fail-on error
+    npx -y caspian-security scan . --format json --fail-on error
 
 Then read the JSON output and act on it:
 - Fix every finding at "Error" severity, then re-run to confirm it is clear.
@@ -316,13 +316,13 @@ Then read the JSON output and act on it:
   "mcpServers": {
     "caspian-security": {
       "command": "npx",
-      "args": ["-y", "caspian-security", "caspian", "mcp"]
+      "args": ["-y", "caspian-security", "mcp"]
     }
   }
 }</code></pre>
   <table>
     <tr><th>Client</th><th>Where the config lives</th></tr>
-    <tr><td>Claude Code</td><td><code>.mcp.json</code> at the project root, or <code>claude mcp add caspian-security -- npx -y caspian-security caspian mcp</code></td></tr>
+    <tr><td>Claude Code</td><td><code>.mcp.json</code> at the project root, or <code>claude mcp add caspian-security -- npx -y caspian-security mcp</code></td></tr>
     <tr><td>Claude Desktop</td><td><code>%APPDATA%\Claude\claude_desktop_config.json</code> (Win) · <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> (mac)</td></tr>
     <tr><td>Cursor</td><td><code>~/.cursor/mcp.json</code> (global) or <code>.cursor/mcp.json</code> (project)</td></tr>
     <tr><td>Antigravity</td><td>Antigravity Settings → MCP / Plugins</td></tr>
@@ -346,11 +346,11 @@ Then read the JSON output and act on it:
     baseline: .caspian-baseline.json   # optional</code></pre>
   <p>Findings land in the GitHub Security tab automatically (SARIF upload).</p>
   <h3>Any other CI (GitLab, Jenkins, CircleCI, Drone, BuildKite)</h3>
-  <pre><code>npx -y caspian-security caspian scan . --format sarif --output results.sarif --fail-on error</code></pre>
+  <pre><code>npx -y caspian-security scan . --format sarif --output results.sarif --fail-on error</code></pre>
   <p>The exit code gates the job: <code>0</code> passes, <code>1</code> fails on findings, <code>2</code> fails on a scan error.</p>
   <h3>Git pre-commit hook (husky)</h3>
   <pre><code># .husky/pre-commit
-npx -y caspian-security caspian scan . --changed-since origin/main --fail-on error</code></pre>
+npx -y caspian-security scan . --changed-since origin/main --fail-on error</code></pre>
   <h3>Scheduled scans</h3>
   <p>Run <code>caspian scan</code> on cron (Linux/macOS) or Windows Task Scheduler to catch drift — e.g. nightly <code>caspian git-history .</code> for leaked secrets.</p>
 

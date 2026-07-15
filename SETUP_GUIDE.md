@@ -105,7 +105,7 @@ Caspian is also a standalone `caspian` command that runs in any terminal — Pow
 
 ```bash
 # Zero install (any shell)
-npx -y caspian-security caspian scan . --format json --fail-on error
+npx -y caspian-security scan . --format json --fail-on error
 
 # Or install once and use everywhere
 npm install -g caspian-security

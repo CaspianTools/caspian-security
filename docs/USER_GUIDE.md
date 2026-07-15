@@ -52,7 +52,7 @@ code --install-extension caspian-security-10.6.1.vsix
 
 ```bash
 # Zero install — runs the latest published version (any shell)
-npx -y caspian-security caspian scan .
+npx -y caspian-security scan .
 
 # Or install once and get the `caspian` command everywhere
 npm install -g caspian-security
@@ -300,7 +300,7 @@ configuration in this repository.
 
 After you finish editing code in this project, run:
 
-    npx -y caspian-security caspian scan . --format json --fail-on error
+    npx -y caspian-security scan . --format json --fail-on error
 
 Then read the JSON output and act on it:
 - Fix every finding at "Error" severity, then re-run to confirm it is clear.
@@ -323,7 +323,7 @@ caspian mcp-config --client claude-code   # or claude-desktop | cursor | antigra
   "mcpServers": {
     "caspian-security": {
       "command": "npx",
-      "args": ["-y", "caspian-security", "caspian", "mcp"]
+      "args": ["-y", "caspian-security", "mcp"]
     }
   }
 }
@@ -331,7 +331,7 @@ caspian mcp-config --client claude-code   # or claude-desktop | cursor | antigra
 
 | Client | Where the config lives |
 |---|---|
-| **Claude Code** | `.mcp.json` at the project root, or `claude mcp add caspian-security -- npx -y caspian-security caspian mcp` |
+| **Claude Code** | `.mcp.json` at the project root, or `claude mcp add caspian-security -- npx -y caspian-security mcp` |
 | **Claude Desktop** | `%APPDATA%\Claude\claude_desktop_config.json` (Windows) · `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) |
 | **Cursor** | `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project) |
 | **Antigravity** | Antigravity Settings → MCP / Plugins |
@@ -363,7 +363,7 @@ Findings land in the GitHub Security tab automatically (SARIF upload).
 ### Any other CI (GitLab, Jenkins, CircleCI, Drone, BuildKite)
 
 ```bash
-npx -y caspian-security caspian scan . --format sarif --output results.sarif --fail-on error
+npx -y caspian-security scan . --format sarif --output results.sarif --fail-on error
 ```
 
 The exit code gates the job: `0` passes, `1` fails on findings, `2` fails on a scan error.
@@ -372,7 +372,7 @@ The exit code gates the job: `0` passes, `1` fails on findings, `2` fails on a s
 
 ```bash
 # .husky/pre-commit
-npx -y caspian-security caspian scan . --changed-since origin/main --fail-on error
+npx -y caspian-security scan . --changed-since origin/main --fail-on error
 ```
 
 ### Scheduled scans

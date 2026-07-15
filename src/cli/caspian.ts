@@ -18,7 +18,7 @@
  * Install once and use everywhere:
  *   npm install -g caspian-security   →   caspian scan .
  * Or zero-install:
- *   npx -y caspian-security caspian scan .
+ *   npx -y caspian-security scan .
  *
  * This dispatcher delegates to the same exported entry points the individual
  * bins use (runScanCli, runGitHistoryCli, runCheckUpdatesCli, startMcpServer),
@@ -83,7 +83,7 @@ function printHelp(): void {
     '\n' +
     'Examples:\n' +
     '  caspian scan . --format json --fail-on error\n' +
-    '  npx -y caspian-security caspian scan . --changed-since origin/main\n' +
+    '  npx -y caspian-security scan . --changed-since origin/main\n' +
     '  caspian snippet --agent claude --mode after-edits\n' +
     '  caspian mcp-config --client cursor\n'
   );
@@ -126,6 +126,13 @@ function runMcpConfig(argv: string[]): void {
 }
 
 export async function runCaspian(argv: string[] = process.argv.slice(2)): Promise<void> {
+  // Back-compat: older docs invoked `npx -y caspian-security caspian <sub>`. Now that
+  // `caspian-security` is itself a bin (npx resolves it directly by name), that legacy
+  // form arrives here with a redundant leading `caspian` token. Strip one so both the
+  // new `caspian-security <sub>` and the legacy `caspian-security caspian <sub>` resolve
+  // to the same subcommand. No real subcommand is named `caspian`, so this is safe.
+  if (argv[0] === 'caspian') { argv = argv.slice(1); }
+
   const sub = argv[0];
   const rest = argv.slice(1);
 

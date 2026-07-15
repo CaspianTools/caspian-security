@@ -398,7 +398,7 @@ right path:
   "mcpServers": {
     "caspian-security": {
       "command": "npx",
-      "args": ["-y", "caspian-security", "caspian", "mcp"]
+      "args": ["-y", "caspian-security", "mcp"]
     }
   }
 }
@@ -406,7 +406,7 @@ right path:
 
 | Client | Where the config lives |
 |---|---|
-| **Claude Code** | `.mcp.json` at the project root, or run `claude mcp add caspian-security -- npx -y caspian-security caspian mcp` |
+| **Claude Code** | `.mcp.json` at the project root, or run `claude mcp add caspian-security -- npx -y caspian-security mcp` |
 | **Claude Desktop** | `%APPDATA%\Claude\claude_desktop_config.json` (Windows) / `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) |
 | **Cursor** | `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project) |
 | **Antigravity** | Antigravity Settings → MCP / Plugins (`mcp_config.json`) |

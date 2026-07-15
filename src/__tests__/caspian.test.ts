@@ -43,6 +43,15 @@ describe('caspian dispatcher — meta', () => {
     expect(stdout.trim()).toBe(pkg.version);
   });
 
+  it('strips a redundant leading `caspian` token (legacy npx form)', async () => {
+    // `npx -y caspian-security caspian <sub>` (pre-10.7.3 docs) now resolves the
+    // `caspian-security` bin directly, so the extra `caspian` token lands here. The
+    // shim drops it — without the shim this would exit 2 as an unknown command.
+    const { code, stdout } = await invoke(['caspian', '--version']);
+    expect(code).toBe(0);
+    expect(stdout.trim()).toBe(pkg.version);
+  });
+
   it('prints usage with no args and with help', async () => {
     for (const argv of [[], ['help'], ['--help']]) {
       const { code, stdout } = await invoke(argv);
@@ -66,7 +75,7 @@ describe('caspian dispatcher — snippet', () => {
     const { code, stdout } = await invoke(['snippet', '--agent', 'claude', '--mode', 'after-edits']);
     expect(code).toBe(0);
     expect(stdout).toContain('Caspian Security');
-    expect(stdout).toContain('npx -y caspian-security caspian scan .');
+    expect(stdout).toContain('npx -y caspian-security scan .');
   });
 
   it('rejects an invalid --agent with exit 2', async () => {

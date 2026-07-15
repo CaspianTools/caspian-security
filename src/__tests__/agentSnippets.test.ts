@@ -54,7 +54,7 @@ describe('buildAgentInstructions', () => {
 });
 
 describe('buildMcpConfig', () => {
-  it('emits valid JSON with the npx caspian mcp command for every client', () => {
+  it('emits valid JSON with the npx mcp command for every client', () => {
     for (const client of MCP_CLIENTS) {
       const { json, configPath, label } = buildMcpConfig(client.id);
       expect(label).toBe(client.label);
@@ -62,7 +62,7 @@ describe('buildMcpConfig', () => {
       const parsed = JSON.parse(json);
       const server = parsed.mcpServers['caspian-security'];
       expect(server.command).toBe('npx');
-      expect(server.args).toEqual(['-y', 'caspian-security', 'caspian', 'mcp']);
+      expect(server.args).toEqual(['-y', 'caspian-security', 'mcp']);
     }
   });
 

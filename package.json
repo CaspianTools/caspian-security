@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/Caspian-Explorer/caspian-security"
   },
-  "version": "10.7.2",
+  "version": "10.7.3",
   "publisher": "CaspianTools",
   "license": "MIT",
   "engines": {
@@ -46,6 +46,7 @@
   ],
   "main": "./out/extension.js",
   "bin": {
+    "caspian-security": "out/cli/caspian.js",
     "caspian": "out/cli/caspian.js",
     "caspian-scan": "out/cli/scan.js",
     "caspian-git-history-scan": "out/cli/gitHistoryScan.js",

@@ -31,7 +31,7 @@ fronts every capability:
 
 ```bash
 # One-off, zero install (works in PowerShell, cmd, and bash)
-npx -y caspian-security caspian scan . --format json --fail-on error
+npx -y caspian-security scan . --format json --fail-on error
 
 # Or install globally, then just `caspian ...`
 npm install -g caspian-security
@@ -72,7 +72,7 @@ writes into your project — it only gives you text to paste wherever you like.
   "mcpServers": {
     "caspian-security": {
       "command": "npx",
-      "args": ["-y", "caspian-security", "caspian", "mcp"]
+      "args": ["-y", "caspian-security", "mcp"]
     }
   }
 }
@@ -83,7 +83,7 @@ config lives per client:
 
 | Client | Config location |
 |---|---|
-| Claude Code | `.mcp.json` at the project root, or `claude mcp add caspian-security -- npx -y caspian-security caspian mcp` |
+| Claude Code | `.mcp.json` at the project root, or `claude mcp add caspian-security -- npx -y caspian-security mcp` |
 | Claude Desktop | `%APPDATA%\Claude\claude_desktop_config.json` (Windows) / `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) |
 | Cursor | `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project) |
 | Antigravity | Antigravity Settings → MCP / Plugins |

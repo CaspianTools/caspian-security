@@ -4,6 +4,25 @@ All notable changes to the Caspian Security extension are documented in this fil
 
 ---
 
+## [10.7.3] - 2026-07-15
+
+Makes the advertised one-command AI-agent integration actually run. Every documented zero-install command used the shape `npx -y caspian-security caspian <sub>`, but npx could not resolve it: the package ships five bins and none was named `caspian-security`, so npx errored with *"could not determine executable to run"*. This adds a `caspian-security` bin (aliasing the unified CLI) so `npx -y caspian-security <sub>` — and `claude mcp add caspian-security -- npx -y caspian-security mcp` — work directly, with no `-p` flag or `add-json` workaround needed.
+
+### Added
+
+- **[package.json](package.json)** — new `caspian-security` bin (→ `out/cli/caspian.js`, the unified dispatcher) so npx resolves the package name to a runnable command. `npx -y caspian-security scan .` / `… mcp` / `… git-history` now work zero-install, matching the package's "one-command" promise.
+
+### Fixed
+
+- **[src/integration/agentSnippets.ts](src/integration/agentSnippets.ts)** — the copy-paste command generator (single source of truth for the `caspian` CLI and the VS Code **Copy AI Agent Instructions** command) dropped the redundant `caspian` token from `SCAN_COMMAND`, `PR_SCAN_COMMAND`, the emitted MCP `.mcp.json` args (now `["-y", "caspian-security", "mcp"]`), and the `claude mcp add` note.
+- **Docs** — README, USER_GUIDE (Markdown + HTML), QUICKSTART, SETUP_GUIDE, and BUILD now use the working `npx -y caspian-security <sub>` form everywhere.
+
+### Changed
+
+- **[src/cli/caspian.ts](src/cli/caspian.ts)** — the dispatcher strips a redundant leading `caspian` token, so any command copied from pre-10.7.3 docs (`npx -y caspian-security caspian mcp`) keeps working. Covered by a new dispatcher test.
+
+---
+
 ## [10.7.2] - 2026-07-15
 
 npm packaging fix so the standalone CLI actually ships. npm 11's publish-time normalization silently strips `bin` entries whose paths start with `./`, which meant the `caspian` CLI commands were dropped from the published npm package. Paths are now bare-relative so the five console commands install correctly via `npm install -g caspian-security`.
