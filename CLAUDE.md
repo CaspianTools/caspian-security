@@ -9,7 +9,7 @@
   2. **Documentation updates** — update all affected docs: `README.md`, `ARCHITECTURE.md`, `BUILD.md`, `SETUP_GUIDE.md`, `QUICKSTART.md`, `START_HERE.md`, `docs/USER_GUIDE.md`, `docs/user-guide.html`, and the `package.json` description. Keep `docs/USER_GUIDE.md`, `docs/user-guide.html`, and the wiki **User Guide** page in sync.
   3. **Wiki updates** — if the change affects user-facing features, update the relevant GitHub Wiki pages (clone from `https://github.com/CaspianTools/caspian-security.wiki.git`, edit, commit, push). Always mirror `docs/USER_GUIDE.md` into the wiki **User Guide** page.
   4. **Build VSIX** — run `vsce package` to produce a new `.vsix` with the incremented version number. Confirm it packages without errors.
-  5. **Commit** — stage all changed files and commit with a descriptive message following the Pre-Commit Checklist below (lint, compile, review, tag, push, release, discussion post).
+  5. **Commit** — stage all changed files and commit with a descriptive message following the Pre-Commit Checklist below (lint, compile, review, tag, push, release, Public-Assets release note).
   6. **Notify the user** — always tell the user the new version number and confirm the VSIX was built successfully. Never silently skip this.
   Never skip these steps. They apply to every task, no matter how small. If you forget any step, go back and complete it before moving on.
 
@@ -93,35 +93,34 @@ gh release create vX.Y.Z caspian-security-X.Y.Z.vsix \
   --notes "<changelog entries for this version>"
 ```
 
-### 11. Post to GitHub Discussions
-After every commit, create a GitHub Discussion in the **Announcements** category. The post must be **social-media-ready** — the user should be able to copy-paste it directly to Twitter/X, LinkedIn, etc.
+### 11. Publish the update in Public-Assets
+Every release gets its own Markdown release note in the public **[`CaspianTools/Public-Assets`](https://github.com/CaspianTools/Public-Assets)** repo, in the `caspian-security/` folder. caspiantools.com reads that repo to build the project page's "Updates" section and the RSS / JSON feeds, so pushing the file there is the whole publishing step. **Do not post to GitHub Discussions — that flow ended on 2026-10-01; existing Discussions stay but nothing new goes there.**
 
-**Format requirements:**
-- **Title:** action-oriented, attention-grabbing, under 100 characters (e.g., "Caspian Security now learns from your fixes")
-- **Body:** 2-4 bullet points of what's new, a one-liner value prop, and the VS Code Marketplace link. Use emojis sparingly for visual appeal.
-- **Always include the Marketplace link:** https://marketplace.visualstudio.com/items?itemName=CaspianTools.caspian-security
-- Keep it short and punchy — 1-3 sentences for the intro, then bullets.
+The local clone is `../Public-Assets` (`C:\Users\user\GitHub\Public-Assets`). If it's missing, run `gh repo clone CaspianTools/Public-Assets ../Public-Assets`. Always `git pull` in it before you write.
 
-**Create via GraphQL API:**
-```bash
-gh api graphql -f query='
-  mutation {
-    createDiscussion(input: {
-      repositoryId: "R_kgDORDMT5Q",
-      categoryId: "DIC_kwDORDMT5c4C1lYC",
-      title: "<TITLE>",
-      body: "<BODY>"
-    }) {
-      discussion { url }
-    }
-  }
-'
+**Where it goes:**
 ```
+Public-Assets/caspian-security/release-notes/
+├── README.md            ← index, newest first: add this release's row at the TOP of the table
+└── <major>.<minor>/     ← e.g. 9.0/  (create it for the first release of a new minor line)
+    └── <X.Y.Z>.md       ← e.g. 9.0.1.md: bare version, no "v" prefix
+```
+`release-notes/README.md` doesn't exist yet: create it on the first release, modelled on `Public-Assets/caspian-taskmaster/release-notes/README.md` (a one-line intro, then a `| Version | Date | Headline |` table whose rows link to `<major>.<minor>/<X.Y.Z>.md`).
 
-**Example post:**
-> **Title:** Caspian Security 8.0 — Your scanner now learns from every fix
+**How to write it.** Copy `Public-Assets/_templates/release-note.md` and fill in every field. Use [`caspian-taskmaster/release-notes/1.31/1.31.2.md`](https://github.com/CaspianTools/Public-Assets/blob/main/caspian-taskmaster/release-notes/1.31/1.31.2.md) as the worked example.
+- **Front matter:** `product: Caspian Security`, `version` (bare `X.Y.Z`), `date` (same as the CHANGELOG heading), `type` (`patch` / `minor` / `major`) and `headline`.
+- **Top section (social-media-ready):** the user copy-pastes everything above `## Full changes` straight to Twitter/X, LinkedIn and similar sites, so keep it short and punchy.
+  - `# Caspian Security X.Y.Z: <headline>`. The headline is action-oriented, attention-grabbing and user-facing, under 100 characters (e.g., "Your scanner now learns from every fix").
+  - A 1–3 sentence intro.
+  - 2–4 bullets of what's new. Use emojis sparingly for visual appeal.
+  - A one-line value proposition.
+  - **Always include the Marketplace link:** https://marketplace.visualstudio.com/items?itemName=CaspianTools.caspian-security
+- **`## Full changes`:** this version's CHANGELOG section, verbatim. Never link into a private repo; readers of Public-Assets can't open it.
+- **`## Get it`:** the Marketplace and Open VSX (https://open-vsx.org/extension/CaspianTools/caspian-security) links.
+
+**Example top section:**
+> # Caspian Security 8.0.0: Your scanner now learns from every fix
 >
-> **Body:**
 > Caspian Security 8.0 is here — the extension now gets smarter with every scan.
 >
 > - Learns which rules produce real issues vs false positives
@@ -130,6 +129,20 @@ gh api graphql -f query='
 > - Opt-in telemetry — preview exactly what's shared before enabling
 >
 > https://marketplace.visualstudio.com/items?itemName=CaspianTools.caspian-security
+
+**Non-release notices** (no version number) go in `updates/` instead: copy `Public-Assets/_templates/update.md` to `caspian-security/updates/<YYYY>/<YYYY-MM-DD>-<slug>.md`, with front matter `product`, `title` (quote it if it contains ` #`), `date`, `type` (`feature` / `fix` / `release` / `notice`), `social` (`false` = feed and website only) and `draft` (`true` = committed but not published). Body: two to five plain sentences for users, not developers.
+
+**Then validate, commit and push Public-Assets:**
+```bash
+cd ../Public-Assets
+node scripts/build-index.mjs --validate
+git add caspian-security/release-notes     # only the new file(s) and the index row, never index.json
+git commit -m "Add caspian-security X.Y.Z update"
+git push origin main
+```
+Never commit `index.json`; the Build index workflow regenerates it on push. Never rename or move a published file — its path is its permanent ID in the feeds, so a moved file shows up as a new post.
+
+Tell the user the note's URL: `https://github.com/CaspianTools/Public-Assets/blob/main/caspian-security/release-notes/<major>.<minor>/<X.Y.Z>.md`. It appears on https://caspiantools.com/projects/caspian-security and in https://caspiantools.com/feeds/caspian-security.xml within minutes.
 
 ## Worktrees & the ship rule
 
@@ -142,6 +155,6 @@ Claude Code can run parallel sessions in isolated **git worktrees** (`claude --w
 3. **Resolve conflicts in the worktree, never on `main`.** At land time: `git fetch origin` → **rebase `worktree-<name>` onto the latest `origin/main`** → resolve every conflict *there*, so `main` only ever receives an already-merged, clean tree.
 4. **Finalize the version bump last.** The `package.json` `version`, the new `## [X.Y.Z] - YYYY-MM-DD` heading in `CHANGELOG.md`, and the synced `package-lock.json` (`npm install`) are the *guaranteed* collision between two shippable worktrees — plus the `vX.Y.Z` git tag and the versioned `.vsix` filename. Don't fix the number until after the rebase — take *current-main + 1*, bump `package.json` + `CHANGELOG.md`, and re-run `npm install`.
 5. **Re-verify + rebuild after resolving.** Re-run the Pre-Commit Checklist gates on the rebased tree: `npm run lint`, `npm run compile`, `npm test`, then `vsce package` to confirm it still packages cleanly. Also refresh any affected docs (`README.md`, `ARCHITECTURE.md`, `BUILD.md`, `SETUP_GUIDE.md`, `QUICKSTART.md`, `START_HERE.md`, `docs/USER_GUIDE.md`, `docs/user-guide.html`, and the wiki User Guide) so they match the merged result. A conflict resolution that isn't re-verified is a bug waiting to ship.
-6. **Only then ship.** Fast-forward `main` to the clean, verified branch → `git push origin main --tags` → `gh release create vX.Y.Z caspian-security-X.Y.Z.vsix …` → `vsce publish` + `ovsx publish` → post the Announcements Discussion (step 11 above). **Never push a conflicted or failing tree to `main`, and never publish from an unverified branch.**
+6. **Only then ship.** Fast-forward `main` to the clean, verified branch → `git push origin main --tags` → `gh release create vX.Y.Z caspian-security-X.Y.Z.vsix …` → `vsce publish` + `ovsx publish` → publish the release note in Public-Assets (step 11 above). **Never push a conflicted or failing tree to `main`, and never publish from an unverified branch.**
 
 For solo, single-stream work that ships immediately, **skip worktrees and work on `main` directly** — the rule needs no adaptation. Reserve worktrees for genuine parallelism (two tasks at once) or experiments you may not ship.
