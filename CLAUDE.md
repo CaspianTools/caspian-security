@@ -142,7 +142,7 @@ git push origin main
 ```
 Never commit `index.json`; the Build index workflow regenerates it on push. Never rename or move a published file — its path is its permanent ID in the feeds, so a moved file shows up as a new post.
 
-Tell the user the note's URL: `https://github.com/CaspianTools/Public-Assets/blob/main/caspian-security/release-notes/<major>.<minor>/<X.Y.Z>.md`. It appears on https://caspiantools.com/projects/caspian-security and in https://caspiantools.com/feeds/caspian-security.xml within minutes.
+Tell the user the note's URL: `https://github.com/CaspianTools/Public-Assets/blob/main/caspian-security/release-notes/<major>.<minor>/<X.Y.Z>.md`. It appears on https://caspiantools.com/projects/caspian-security and in https://caspiantools.com/feeds/caspian-security.xml after the next daily site rebuild (05:00 UTC).
 
 ## Worktrees & the ship rule
 
